@@ -1,10 +1,13 @@
 
-extern crate rand;
-#[macro_use] extern crate itertools;
+extern crate nalgebra;
+use nalgebra::{Vector3};
 
+extern crate rand;
 use rand::IsaacRng;
 use rand::Rng;
 use rand::SeedableRng;
+
+#[macro_use] extern crate itertools;
 
 #[derive(Debug)]
 pub struct Point2d {
@@ -49,6 +52,18 @@ pub fn u_grid_jittered(s: &mut Sampler, root: usize) -> Vec<Point2d> {
             x: p.x + s.rng.gen_range(lo, hi),
             y: p.y + s.rng.gen_range(lo, hi),
         }).collect()
+}
+
+pub fn u_sphere_random(s: &mut Sampler) -> Vector3<f64> {
+    let mut v = Vector3::new(5.0, 0.0, 0.0);
+
+    while v.dot(&v) >= 1.0 {
+        v.x = s.rng.next_f64();
+        v.y = s.rng.next_f64();
+        v.z = s.rng.next_f64();
+    };
+
+    v
 }
 
 #[cfg(test)]

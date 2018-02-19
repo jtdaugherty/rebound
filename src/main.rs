@@ -36,7 +36,6 @@ impl Color {
 }
 
 fn black() -> Color { Color::all(0.0) }
-fn white() -> Color { Color::all(1.0) }
 
 struct Image {
     height: usize,
@@ -89,7 +88,7 @@ struct Sphere {
 }
 
 trait Intersectable {
-    fn hit(&self, r: &Ray) -> Option<Hit>;
+    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit>;
 }
 
 #[derive(Clone)]
@@ -101,7 +100,7 @@ struct Hit {
 }
 
 impl Intersectable for Sphere {
-    fn hit(&self, r: &Ray) -> Option<Hit> {
+    fn hit(&self, r: &Ray, _: &mut samplers::Sampler) -> Option<Hit> {
         let oc = r.origin - self.center;
         let a = r.direction.dot(&r.direction);
         let b = 2.0 * oc.dot(&r.direction);
@@ -141,16 +140,26 @@ struct World {
 }
 
 impl Intersectable for World {
-    fn hit(&self, r: &Ray) -> Option<Hit> {
+    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit> {
         let mut hits: Vec<Hit> = self.objects.iter()
-              .map(|o| o.hit(r))
+              .map(|o| o.hit(r, s))
               .filter(|h| h.is_some())
               .map(|h| h.unwrap())
               .collect();
 
         if !hits.is_empty() {
             hits.sort_by(|a, b| if a.t.le(&b.t) { Ordering::Less } else { Ordering::Greater });
-            Some(hits[0].clone())
+            let h = hits[0].clone();
+            let target = h.p + h.normal + samplers::u_sphere_random(s);
+            let shadow_ray = Ray {
+                origin: h.p,
+                direction: target - h.p,
+            };
+
+            match self.hit(&shadow_ray, s) {
+                None => Some(h),
+                Some(_) => Some(Hit { color: black(), ..h }),
+            }
         } else {
             None
         }
@@ -201,7 +210,8 @@ fn main() {
         origin: Vector3::new(0.0, 0.0, 0.0),
     };
 
-    let samples = samplers::u_grid_regular(2);
+    let mut sampler = samplers::new();
+    let samples = samplers::u_grid_regular(10);
 
     for row in 0..img.height {
         for col in 0..img.width {
@@ -212,7 +222,7 @@ fn main() {
                 let v = ((img.height - 1 - row) as f64 + point.y) / (img.height as f64);
                 let r = cam.get_ray(u, v);
 
-                match w.hit(&r) {
+                match w.hit(&r, &mut sampler) {
                     None => add_colors(&mut color, &w.background),
                     Some(h) => add_colors(&mut color, &h.color),
                 }
