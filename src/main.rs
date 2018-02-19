@@ -3,6 +3,8 @@ extern crate samplers;
 extern crate nalgebra;
 use nalgebra::{Vector3};
 
+const t_min: f64 = 0.0005;
+
 #[derive(Clone)]
 struct Color {
     r: f64,
@@ -73,25 +75,52 @@ struct Sphere {
 }
 
 trait Intersectable {
-    fn hit(&self, r: &Ray) -> bool;
+    fn hit(&self, r: &Ray) -> Option<Hit>;
+}
+
+struct Hit {
+    t: f64,
+    p: Vector3<f64>,
+    normal: Vector3<f64>,
 }
 
 impl Intersectable for Sphere {
-    fn hit(&self, r: &Ray) -> bool {
+    fn hit(&self, r: &Ray) -> Option<Hit> {
         let oc = r.origin - self.center;
         let a = r.direction.dot(&r.direction);
         let b = 2.0 * oc.dot(&r.direction);
         let c = oc.dot(&oc) - self.radius * self.radius;
         let discriminant = b * b - 4.0 * a * c;
-        discriminant > 0.0
+
+        if discriminant > 0.0 {
+            let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
+
+            if t1 > t_min {
+                let p = r.point_at_distance(t1);
+                Some(Hit {
+                    p, t: t1, normal: (p - self.center) / self.radius,
+                })
+            } else {
+                let t2 = (-b + (b * b - a * c).sqrt()) / a;
+                if t2 > t_min {
+                    let p = r.point_at_distance(t2);
+                    Some(Hit {
+                        p, t: t2, normal: (p - self.center) / self.radius,
+                    })
+                } else {
+                    None
+                }
+            }
+        } else {
+            None
+        }
     }
 }
 
 fn hit(s: &Sphere, r: &Ray) -> Color {
-    if s.hit(r) {
-        white()
-    } else {
-        black()
+    match s.hit(r) {
+        None => black(),
+        Some(_) => white(),
     }
 }
 
