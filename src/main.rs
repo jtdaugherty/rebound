@@ -73,6 +73,7 @@ impl Ray {
 struct Sphere {
     center: Vector3<f64>,
     radius: f64,
+    color: Color,
 }
 
 trait Intersectable {
@@ -84,6 +85,7 @@ struct Hit {
     t: f64,
     p: Vector3<f64>,
     normal: Vector3<f64>,
+    color: Color,
 }
 
 impl Intersectable for Sphere {
@@ -101,6 +103,7 @@ impl Intersectable for Sphere {
                 let p = r.point_at_distance(t1);
                 Some(Hit {
                     p, t: t1, normal: (p - self.center) / self.radius,
+                    color: self.color.clone(),
                 })
             } else {
                 let t2 = (-b + (b * b - a * c).sqrt()) / a;
@@ -108,6 +111,7 @@ impl Intersectable for Sphere {
                     let p = r.point_at_distance(t2);
                     Some(Hit {
                         p, t: t2, normal: (p - self.center) / self.radius,
+                        color: self.color.clone(),
                     })
                 } else {
                     None
@@ -141,9 +145,15 @@ impl Intersectable for World {
 }
 
 fn main() {
-    let s = Sphere {
+    let s1 = Sphere {
         center: Vector3::new(0.0, 0.0, -1.0),
         radius: 0.5,
+        color: Color::new(1.0, 0.0, 0.0),
+    };
+    let s2 = Sphere {
+        center: Vector3::new(0.0, -100.5, -1.0),
+        radius: 100.0,
+        color: Color::new(0.0, 0.0, 1.0),
     };
 
     let mut img = Image::new(200, 100, black());
@@ -154,7 +164,7 @@ fn main() {
     let o = Vector3::new(0.0, 0.0, 0.0);
 
     let w = World {
-        objects: vec![s],
+        objects: vec![s1, s2],
     };
 
     for row in (0..img.height).rev() {
@@ -168,7 +178,7 @@ fn main() {
 
             match w.hit(&r) {
                 None => (),
-                Some(_) => img.set_pixel(col, row, white()),
+                Some(h) => img.set_pixel(col, row, h.color),
             }
         }
     }
