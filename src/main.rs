@@ -151,7 +151,11 @@ struct SimpleCamera {
     origin: Vector3<f64>,
 }
 
-impl SimpleCamera {
+trait Camera {
+    fn get_ray(&self, u: f64, v: f64) -> Ray;
+}
+
+impl Camera for SimpleCamera {
     fn get_ray(&self, u: f64, v: f64) -> Ray {
         Ray {
             origin: self.origin,
