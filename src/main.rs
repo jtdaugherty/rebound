@@ -144,6 +144,22 @@ impl Intersectable for World {
     }
 }
 
+struct SimpleCamera {
+    lower_left: Vector3<f64>,
+    horizontal: Vector3<f64>,
+    vertical: Vector3<f64>,
+    origin: Vector3<f64>,
+}
+
+impl SimpleCamera {
+    fn get_ray(&self, u: f64, v: f64) -> Ray {
+        Ray {
+            origin: self.origin,
+            direction: self.lower_left + self.horizontal * u + self.vertical * v,
+        }
+    }
+}
+
 fn main() {
     let s1 = Sphere {
         center: Vector3::new(0.0, 0.0, -1.0),
@@ -155,26 +171,23 @@ fn main() {
         radius: 100.0,
         color: Color::new(0.0, 0.0, 1.0),
     };
-
-    let mut img = Image::new(400, 200, black());
-
-    let lower_left = Vector3::new(-2.0, -1.0, -1.0);
-    let horizontal = Vector3::new(4.0, 0.0, 0.0);
-    let vertical = Vector3::new(0.0, 2.0, 0.0);
-    let o = Vector3::new(0.0, 0.0, 0.0);
-
     let w = World {
         objects: vec![s1, s2],
+    };
+
+    let mut img = Image::new(400, 200, black());
+    let cam = SimpleCamera {
+        lower_left: Vector3::new(-2.0, -1.0, -1.0),
+        horizontal: Vector3::new(4.0, 0.0, 0.0),
+        vertical: Vector3::new(0.0, 2.0, 0.0),
+        origin: Vector3::new(0.0, 0.0, 0.0),
     };
 
     for row in 0..img.height {
         for col in 0..img.width {
             let u = (col as f64) / (img.width as f64);
             let v = ((img.height - 1 - row) as f64) / (img.height as f64);
-            let r = Ray {
-                origin: o,
-                direction: lower_left + horizontal * u + vertical * v,
-            };
+            let r = cam.get_ray(u, v);
 
             match w.hit(&r) {
                 None => (),
