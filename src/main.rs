@@ -170,7 +170,7 @@ fn main() {
     for row in 0..img.height {
         for col in 0..img.width {
             let u = (col as f64) / (img.width as f64);
-            let v = ((img.height - row) as f64) / (img.height as f64);
+            let v = ((img.height - 1 - row) as f64) / (img.height as f64);
             let r = Ray {
                 origin: o,
                 direction: lower_left + horizontal * u + vertical * v,
