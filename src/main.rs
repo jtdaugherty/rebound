@@ -13,6 +13,18 @@ struct Color {
     b: f64,
 }
 
+fn add_colors(a: &mut Color, b: &Color) {
+    a.r += b.r;
+    a.g += b.g;
+    a.b += b.b;
+}
+
+fn div_color(a: &mut Color, d: f64) {
+    a.r /= d;
+    a.g /= d;
+    a.b /= d;
+}
+
 impl Color {
     fn new(r: f64, g: f64, b: f64) -> Color {
         Color { r, g, b }
@@ -125,6 +137,7 @@ impl Intersectable for Sphere {
 
 struct World {
     objects: Vec<Sphere>,
+    background: Color,
 }
 
 impl Intersectable for World {
@@ -177,6 +190,7 @@ fn main() {
     };
     let w = World {
         objects: vec![s1, s2],
+        background: Color::new(0.2, 0.3, 0.5),
     };
 
     let mut img = Image::new(400, 200, black());
@@ -187,16 +201,25 @@ fn main() {
         origin: Vector3::new(0.0, 0.0, 0.0),
     };
 
+    let samples = samplers::u_grid_regular(2);
+
     for row in 0..img.height {
         for col in 0..img.width {
-            let u = (col as f64) / (img.width as f64);
-            let v = ((img.height - 1 - row) as f64) / (img.height as f64);
-            let r = cam.get_ray(u, v);
+            let mut color = black();
 
-            match w.hit(&r) {
-                None => (),
-                Some(h) => img.set_pixel(col, row, h.color),
+            for point in &samples {
+                let u = (col as f64 + point.x) / (img.width as f64);
+                let v = ((img.height - 1 - row) as f64 + point.y) / (img.height as f64);
+                let r = cam.get_ray(u, v);
+
+                match w.hit(&r) {
+                    None => add_colors(&mut color, &w.background),
+                    Some(h) => add_colors(&mut color, &h.color),
+                }
             }
+
+            div_color(&mut color, samples.len() as f64);
+            img.set_pixel(col, row, color);
         }
     }
 
