@@ -156,7 +156,7 @@ fn main() {
         color: Color::new(0.0, 0.0, 1.0),
     };
 
-    let mut img = Image::new(200, 100, black());
+    let mut img = Image::new(400, 200, black());
 
     let lower_left = Vector3::new(-2.0, -1.0, -1.0);
     let horizontal = Vector3::new(4.0, 0.0, 0.0);
