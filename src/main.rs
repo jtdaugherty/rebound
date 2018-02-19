@@ -72,7 +72,11 @@ struct Sphere {
     radius: f64,
 }
 
-impl Sphere {
+trait Intersectable {
+    fn hit(&self, r: &Ray) -> bool;
+}
+
+impl Intersectable for Sphere {
     fn hit(&self, r: &Ray) -> bool {
         let oc = r.origin - self.center;
         let a = r.direction.dot(&r.direction);
