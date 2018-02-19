@@ -2,8 +2,9 @@ extern crate samplers;
 
 extern crate nalgebra;
 use nalgebra::{Vector3};
+use std::cmp::Ordering;
 
-const t_min: f64 = 0.0005;
+const T_MIN: f64 = 0.0005;
 
 #[derive(Clone)]
 struct Color {
@@ -78,6 +79,7 @@ trait Intersectable {
     fn hit(&self, r: &Ray) -> Option<Hit>;
 }
 
+#[derive(Clone)]
 struct Hit {
     t: f64,
     p: Vector3<f64>,
@@ -95,14 +97,14 @@ impl Intersectable for Sphere {
         if discriminant > 0.0 {
             let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
 
-            if t1 > t_min {
+            if t1 > T_MIN {
                 let p = r.point_at_distance(t1);
                 Some(Hit {
                     p, t: t1, normal: (p - self.center) / self.radius,
                 })
             } else {
                 let t2 = (-b + (b * b - a * c).sqrt()) / a;
-                if t2 > t_min {
+                if t2 > T_MIN {
                     let p = r.point_at_distance(t2);
                     Some(Hit {
                         p, t: t2, normal: (p - self.center) / self.radius,
@@ -117,10 +119,24 @@ impl Intersectable for Sphere {
     }
 }
 
-fn hit(s: &Sphere, r: &Ray) -> Color {
-    match s.hit(r) {
-        None => black(),
-        Some(_) => white(),
+struct World {
+    objects: Vec<Sphere>,
+}
+
+impl Intersectable for World {
+    fn hit(&self, r: &Ray) -> Option<Hit> {
+        let mut hits: Vec<Hit> = self.objects.iter()
+              .map(|o| o.hit(r))
+              .filter(|h| h.is_some())
+              .map(|h| h.unwrap())
+              .collect();
+
+        if !hits.is_empty() {
+            hits.sort_by(|a, b| if a.t.le(&b.t) { Ordering::Less } else { Ordering::Greater });
+            Some(hits[0].clone())
+        } else {
+            None
+        }
     }
 }
 
@@ -137,6 +153,10 @@ fn main() {
     let vertical = Vector3::new(0.0, 2.0, 0.0);
     let o = Vector3::new(0.0, 0.0, 0.0);
 
+    let w = World {
+        objects: vec![s],
+    };
+
     for row in (0..img.height).rev() {
         for col in 0..img.width {
             let u = (col as f64) / (img.width as f64);
@@ -145,7 +165,11 @@ fn main() {
                 origin: o,
                 direction: lower_left + horizontal * u + vertical * v,
             };
-            img.set_pixel(col, row, hit(&s, &r));
+
+            match w.hit(&r) {
+                None => (),
+                Some(_) => img.set_pixel(col, row, white()),
+            }
         }
     }
 
