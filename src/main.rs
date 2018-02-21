@@ -19,6 +19,10 @@ struct Color {
     b: f64,
 }
 
+fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
+    v - 2.0 * v.dot(&n) * n
+}
+
 impl DivAssign<f64> for Color {
     fn div_assign(&mut self, d: f64) {
         self.r /= d;
@@ -153,6 +157,23 @@ impl<'a> Material<'a> for Lambertian {
     }
 }
 
+struct Metal {
+    albedo: Color,
+}
+
+impl<'a> Material<'a> for Metal {
+    fn scatter(&self, r: &Ray, hit: &Hit, _s: &mut samplers::Sampler) -> Option<ScatterResult> {
+        let reflected = reflect(&r.direction, &hit.normal);
+        Some(ScatterResult {
+            ray: Ray {
+                origin: hit.p,
+                direction: reflected,
+            },
+            attenuate: self.albedo,
+        })
+    }
+}
+
 struct Sphere<'a> {
     center: Vector3<f64>,
     radius: f64,
@@ -219,6 +240,7 @@ impl<'a> Intersectable<'a> for Sphere<'a> {
 struct World<'a> {
     objects: Vec<Sphere<'a>>,
     background: Color,
+    max_depth: usize,
 }
 
 impl<'a> Intersectable<'a> for World<'a> {
@@ -232,11 +254,11 @@ impl<'a> Intersectable<'a> for World<'a> {
 }
 
 impl<'a> World<'a> {
-    fn color(&self, r: &Ray, s: &mut samplers::Sampler, depth: u32) -> Color {
+    fn color(&self, r: &Ray, s: &mut samplers::Sampler, depth: usize) -> Color {
         match self.hit(r, s) {
             None => self.background,
             Some(h) => {
-                if depth < 50 {
+                if depth < self.max_depth {
                     if let Some(sr) = h.material.scatter(r, &h, s) {
                         self.color(&sr.ray, s, depth + 1) * sr.attenuate
                     } else {
@@ -273,20 +295,27 @@ impl Camera for SimpleCamera {
 fn main() {
     let m1 = Lambertian { albedo: Color::new(0.3, 0.3, 0.7), };
     let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
+    let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), };
 
     let s1 = Sphere {
-        center: Vector3::new(0.0, 0.0, -1.0),
+        center: Vector3::new(0.6, 0.0, -1.0),
         radius: 0.5,
         material: &m1,
     };
     let s2 = Sphere {
+        center: Vector3::new(-0.6, 0.0, -1.0),
+        radius: 0.5,
+        material: &m3,
+    };
+    let s3 = Sphere {
         center: Vector3::new(0.0, -10000.5, -1.0),
         radius: 10000.0,
         material: &m2,
     };
     let w = World {
-        objects: vec![s1, s2],
+        objects: vec![s1, s2, s3],
         background: Color::new(1.0, 1.0, 1.0),
+        max_depth: 20,
     };
 
     let mut img = Image::new(400, 200, black());
@@ -298,7 +327,7 @@ fn main() {
     };
 
     let mut sampler = samplers::new();
-    let samples = samplers::u_grid_regular(10);
+    let samples = samplers::u_grid_regular(20);
 
     for row in 0..img.height {
         for col in 0..img.width {
