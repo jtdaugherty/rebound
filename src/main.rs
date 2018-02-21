@@ -7,6 +7,7 @@ use std::cmp::Ordering;
 const T_MIN: f64 = 0.0005;
 
 #[derive(Clone)]
+#[derive(Copy)]
 struct Color {
     r: f64,
     g: f64,
@@ -124,7 +125,7 @@ impl Intersectable for Sphere {
                 let p = r.point_at_distance(t1);
                 Some(Hit {
                     p, t: t1, normal: (p - self.center) / self.radius,
-                    color: self.color.clone(),
+                    color: self.color,
                 })
             } else {
                 let t2 = (-b + (b * b - a * c).sqrt()) / a;
@@ -132,7 +133,7 @@ impl Intersectable for Sphere {
                     let p = r.point_at_distance(t2);
                     Some(Hit {
                         p, t: t2, normal: (p - self.center) / self.radius,
-                        color: self.color.clone(),
+                        color: self.color,
                     })
                 } else {
                     None
