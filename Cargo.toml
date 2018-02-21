@@ -6,3 +6,6 @@ authors = ["Jonathan Daugherty <cygnus@foobox.com>"]
 [dependencies]
 samplers = { path = "samplers" }
 nalgebra = "0.13"
+
+[profile.dev]
+opt-level = 3
