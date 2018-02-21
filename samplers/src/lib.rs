@@ -58,9 +58,9 @@ pub fn u_sphere_random(s: &mut Sampler) -> Vector3<f64> {
     let mut v = Vector3::new(5.0, 0.0, 0.0);
 
     while v.dot(&v) >= 1.0 {
-        v.x = s.rng.next_f64();
-        v.y = s.rng.next_f64();
-        v.z = s.rng.next_f64();
+        v.x = 2.0 * s.rng.next_f64() - 1.0;
+        v.y = 2.0 * s.rng.next_f64() - 1.0;
+        v.z = 2.0 * s.rng.next_f64() - 1.0;
     };
 
     v
