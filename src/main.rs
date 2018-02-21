@@ -360,7 +360,7 @@ fn main() {
     let m1 = Metal { albedo: Color::new(0.3, 0.3, 0.7), gloss: 0.3, };
     let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
     let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), gloss: 0.0, };
-    let m4 = Dielectric { ri: 1.5, reflect_gloss: 0.1, refract_gloss: 0.03, color: Color::new(1.0, 0.5, 0.5), };
+    let m4 = Dielectric { ri: 1.5, reflect_gloss: 0.1, refract_gloss: 0.03, color: Color::new(0.2588, 0.702, 0.9567), };
 
     let s1 = Sphere {
         center: Vector3::new(1.2, 0.0, -1.0),
