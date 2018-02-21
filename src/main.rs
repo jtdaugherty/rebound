@@ -359,7 +359,7 @@ fn main() {
     let m1 = Metal { albedo: Color::new(0.3, 0.3, 0.7), gloss: 0.3, };
     let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
     let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), gloss: 0.0, };
-    let m4 = Dielectric { ri: 2.1, reflect_gloss: 0.2, refract_gloss: 0.1, };
+    let m4 = Dielectric { ri: 1.5, reflect_gloss: 0.1, refract_gloss: 0.03, };
 
     let s1 = Sphere {
         center: Vector3::new(1.2, 0.0, -1.0),
@@ -392,11 +392,11 @@ fn main() {
         lower_left: Vector3::new(-2.0, -1.0, -1.0),
         horizontal: Vector3::new(4.0, 0.0, 0.0),
         vertical: Vector3::new(0.0, 2.0, 0.0),
-        origin: Vector3::new(0.0, 0.0, 0.0),
+        origin: Vector3::new(0.0, 0.0, 0.3),
     };
 
     let mut sampler = samplers::new();
-    let samples = samplers::u_grid_regular(20);
+    let samples = samplers::u_grid_regular(10);
 
     for row in 0..img.height {
         for col in 0..img.width {
