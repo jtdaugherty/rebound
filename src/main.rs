@@ -6,6 +6,8 @@ use std::cmp::Ordering;
 
 use std::ops::DivAssign;
 use std::ops::AddAssign;
+use std::ops::Mul;
+use std::ops::Add;
 
 const T_MIN: f64 = 0.0005;
 
@@ -44,6 +46,42 @@ impl Color {
 }
 
 fn black() -> Color { Color::all(0.0) }
+
+impl Mul<Color> for Color {
+    type Output = Self;
+
+    fn mul(self, other: Color) -> Color {
+        Color {
+            r: self.r * other.r,
+            g: self.g * other.g,
+            b: self.b * other.b,
+        }
+    }
+}
+
+impl Mul<f64> for Color {
+    type Output = Self;
+
+    fn mul(self, other: f64) -> Color {
+        Color {
+            r: self.r * other,
+            g: self.g * other,
+            b: self.b * other,
+        }
+    }
+}
+
+impl Add<Color> for Color {
+    type Output = Self;
+
+    fn add(self, other: Color) -> Color {
+        Color {
+            r: self.r + other.r,
+            g: self.g + other.g,
+            b: self.b + other.b,
+        }
+    }
+}
 
 struct Image {
     height: usize,
