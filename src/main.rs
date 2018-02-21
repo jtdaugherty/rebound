@@ -23,6 +23,17 @@ fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     v - 2.0 * v.dot(&n) * n
 }
 
+fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_nt: f64) -> Option<Vector3<f64>> {
+    let uv = v.normalize();
+    let dt = uv.dot(n);
+    let desc = 1.0 - ni_nt * ni_nt * (1.0 - dt * dt);
+    if desc > 0.0 {
+        Some(ni_nt * (uv - n * dt) - n * desc.sqrt())
+    } else {
+        None
+    }
+}
+
 impl DivAssign<f64> for Color {
     fn div_assign(&mut self, d: f64) {
         self.r /= d;
@@ -153,6 +164,47 @@ impl<'a> Material<'a> for Lambertian {
                 direction: target - hit.p,
             },
             attenuate: self.albedo,
+        })
+    }
+}
+
+fn schlick(cosine: f64, ref_idx: f64) -> f64 {
+    let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+    let r1 = r0 * r0;
+    r1 + (1.0 - r1) * (1.0 - cosine).powf(5.0)
+}
+
+struct Dielectric {
+    ri: f64,
+}
+
+impl<'a> Material<'a> for Dielectric {
+    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
+        let refl = reflect(&r.direction, &hit.normal);
+
+        let (outward_normal, ni_nt, cosine) = if r.direction.dot(&hit.normal) > 0.0 {
+            (-1.0 * hit.normal, self.ri,
+             self.ri * r.direction.dot(&hit.normal) / r.direction.norm())
+        } else {
+            (hit.normal, 1.0 / self.ri,
+             -1.0 * r.direction.dot(&hit.normal) / r.direction.norm())
+        };
+
+        let ray_dir = match refract(&r.direction, &outward_normal, ni_nt) {
+            Some(refracted) => {
+                let prob = schlick(cosine, self.ri);
+                if s.next_f64() < prob {
+                    refl
+                } else {
+                    refracted
+                }
+            },
+            None => refl,
+        };
+
+        Some(ScatterResult {
+            ray: Ray { origin: hit.p, direction: ray_dir },
+            attenuate: Color::all(1.0),
         })
     }
 }
@@ -304,29 +356,35 @@ fn main() {
     let m1 = Metal { albedo: Color::new(0.3, 0.3, 0.7), gloss: 0.3, };
     let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
     let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), gloss: 0.0, };
+    let m4 = Dielectric { ri: 3.5, };
 
     let s1 = Sphere {
-        center: Vector3::new(0.6, 0.0, -1.0),
+        center: Vector3::new(1.2, 0.0, -1.0),
         radius: 0.5,
         material: &m1,
     };
     let s2 = Sphere {
-        center: Vector3::new(-0.6, 0.0, -1.0),
+        center: Vector3::new(-1.2, 0.0, -1.0),
         radius: 0.5,
         material: &m3,
     };
     let s3 = Sphere {
+        center: Vector3::new(0.0, 0.0, -1.0),
+        radius: 0.5,
+        material: &m4,
+    };
+    let s4 = Sphere {
         center: Vector3::new(0.0, -10000.5, -1.0),
         radius: 10000.0,
         material: &m2,
     };
     let w = World {
-        objects: vec![s1, s2, s3],
+        objects: vec![s1, s2, s3, s4],
         background: Color::new(1.0, 1.0, 1.0),
         max_depth: 20,
     };
 
-    let mut img = Image::new(400, 200, black());
+    let mut img = Image::new(800, 400, black());
     let cam = SimpleCamera {
         lower_left: Vector3::new(-2.0, -1.0, -1.0),
         horizontal: Vector3::new(4.0, 0.0, 0.0),
