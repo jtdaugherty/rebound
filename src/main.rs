@@ -99,6 +99,16 @@ struct Hit {
     color: Color,
 }
 
+impl Hit {
+    fn compare(&self, other: &Hit) -> Ordering {
+        if self.t.le(&other.t) {
+            Ordering::Less
+        } else {
+            Ordering::Greater
+        }
+    }
+}
+
 impl Intersectable for Sphere {
     fn hit(&self, r: &Ray, _: &mut samplers::Sampler) -> Option<Hit> {
         let oc = r.origin - self.center;
@@ -141,15 +151,11 @@ struct World {
 
 impl Intersectable for World {
     fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit> {
-        let mut hits: Vec<Hit> = self.objects.iter()
-              .map(|o| o.hit(r, s))
-              .filter(|h| h.is_some())
-              .map(|h| h.unwrap())
+        let hits: Vec<Hit> = self.objects.iter()
+              .filter_map(|o| o.hit(r, s))
               .collect();
 
-        if !hits.is_empty() {
-            hits.sort_by(|a, b| if a.t.le(&b.t) { Ordering::Less } else { Ordering::Greater });
-            let h = hits[0].clone();
+        if let Some(h) = hits.into_iter().min_by(Hit::compare) {
             let target = h.p + h.normal + samplers::u_sphere_random(s);
             let shadow_ray = Ray {
                 origin: h.p,
