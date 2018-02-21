@@ -4,6 +4,9 @@ extern crate nalgebra;
 use nalgebra::{Vector3};
 use std::cmp::Ordering;
 
+use std::ops::DivAssign;
+use std::ops::AddAssign;
+
 const T_MIN: f64 = 0.0005;
 
 #[derive(Clone)]
@@ -14,16 +17,20 @@ struct Color {
     b: f64,
 }
 
-fn add_colors(a: &mut Color, b: &Color) {
-    a.r += b.r;
-    a.g += b.g;
-    a.b += b.b;
+impl DivAssign<f64> for Color {
+    fn div_assign(&mut self, d: f64) {
+        self.r /= d;
+        self.g /= d;
+        self.b /= d;
+    }
 }
 
-fn div_color(a: &mut Color, d: f64) {
-    a.r /= d;
-    a.g /= d;
-    a.b /= d;
+impl AddAssign for Color {
+    fn add_assign(&mut self, other: Color) {
+        self.r += other.r;
+        self.g += other.g;
+        self.b += other.b;
+    }
 }
 
 impl Color {
@@ -232,13 +239,13 @@ fn main() {
                 let v = ((img.height - 1 - row) as f64 + point.y) / (img.height as f64);
                 let r = cam.get_ray(u, v);
 
-                match w.hit(&r, &mut sampler) {
-                    None => add_colors(&mut color, &w.background),
-                    Some(h) => add_colors(&mut color, &h.color),
-                }
+                color += match w.hit(&r, &mut sampler) {
+                    None => w.background,
+                    Some(h) => h.color,
+                };
             }
 
-            div_color(&mut color, samples.len() as f64);
+            color /= samples.len() as f64;
             img.set_pixel(col, row, color);
         }
     }
