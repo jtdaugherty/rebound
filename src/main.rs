@@ -159,18 +159,26 @@ impl<'a> Material<'a> for Lambertian {
 
 struct Metal {
     albedo: Color,
+    gloss: f64,
 }
 
 impl<'a> Material<'a> for Metal {
-    fn scatter(&self, r: &Ray, hit: &Hit, _s: &mut samplers::Sampler) -> Option<ScatterResult> {
+    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
         let reflected = reflect(&r.direction, &hit.normal);
-        Some(ScatterResult {
-            ray: Ray {
-                origin: hit.p,
-                direction: reflected,
-            },
-            attenuate: self.albedo,
-        })
+        let fuzz_vec = self.gloss * samplers::u_sphere_random(s);
+        let dir = reflected + fuzz_vec;
+
+        if dir.dot(&hit.normal) > 0.0 {
+            Some(ScatterResult {
+                ray: Ray {
+                    origin: hit.p,
+                    direction: dir,
+                },
+                attenuate: self.albedo,
+            })
+        } else {
+            None
+        }
     }
 }
 
@@ -293,9 +301,9 @@ impl Camera for SimpleCamera {
 }
 
 fn main() {
-    let m1 = Lambertian { albedo: Color::new(0.3, 0.3, 0.7), };
+    let m1 = Metal { albedo: Color::new(0.3, 0.3, 0.7), gloss: 0.3, };
     let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
-    let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), };
+    let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), gloss: 0.0, };
 
     let s1 = Sphere {
         center: Vector3::new(0.6, 0.0, -1.0),
