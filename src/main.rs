@@ -158,15 +158,18 @@ impl Intersectable for World {
 
         if let Some(h) = hits.into_iter().min_by(Hit::compare) {
             let target = h.p + h.normal + samplers::u_sphere_random(s);
+
             let shadow_ray = Ray {
                 origin: h.p,
                 direction: target - h.p,
             };
 
-            match self.hit(&shadow_ray, s) {
-                None => Some(h),
-                Some(_) => Some(Hit { color: black(), ..h }),
-            }
+            let new_color = match self.hit(&shadow_ray, s) {
+                None => h.color,
+                Some(_) => black(),
+            };
+
+            Some(Hit { color: new_color, ..h })
         } else {
             None
         }
