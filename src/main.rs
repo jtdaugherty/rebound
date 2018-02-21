@@ -176,6 +176,8 @@ fn schlick(cosine: f64, ref_idx: f64) -> f64 {
 
 struct Dielectric {
     ri: f64,
+    reflect_gloss: f64,
+    refract_gloss: f64,
 }
 
 impl<'a> Material<'a> for Dielectric {
@@ -190,20 +192,21 @@ impl<'a> Material<'a> for Dielectric {
              -1.0 * r.direction.dot(&hit.normal) / r.direction.norm())
         };
 
-        let ray_dir = match refract(&r.direction, &outward_normal, ni_nt) {
+        let (gloss, ray_dir) = match refract(&r.direction, &outward_normal, ni_nt) {
             Some(refracted) => {
                 let prob = schlick(cosine, self.ri);
                 if s.next_f64() < prob {
-                    refl
+                    (self.reflect_gloss, refl)
                 } else {
-                    refracted
+                    (self.refract_gloss, refracted)
                 }
             },
-            None => refl,
+            None => (self.reflect_gloss, refl),
         };
 
+        let fuzz_vec = gloss * samplers::u_sphere_random(s);
         Some(ScatterResult {
-            ray: Ray { origin: hit.p, direction: ray_dir },
+            ray: Ray { origin: hit.p, direction: ray_dir + fuzz_vec },
             attenuate: Color::all(1.0),
         })
     }
@@ -356,7 +359,7 @@ fn main() {
     let m1 = Metal { albedo: Color::new(0.3, 0.3, 0.7), gloss: 0.3, };
     let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
     let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), gloss: 0.0, };
-    let m4 = Dielectric { ri: 3.5, };
+    let m4 = Dielectric { ri: 2.1, reflect_gloss: 0.2, refract_gloss: 0.1, };
 
     let s1 = Sphere {
         center: Vector3::new(1.2, 0.0, -1.0),
