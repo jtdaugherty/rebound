@@ -19,6 +19,12 @@ pub struct Sampler {
     rng: IsaacRng,
 }
 
+impl Sampler {
+    pub fn next_f64(&mut self) -> f64 {
+        self.rng.next_f64()
+    }
+}
+
 pub fn new() -> Sampler {
     let sz = 8;
     let mut trng = rand::thread_rng();
