@@ -217,7 +217,7 @@ fn main() {
     };
 
     let mut sampler = samplers::new();
-    let samples = samplers::u_grid_regular(10);
+    let samples = samplers::u_grid_regular(2);
 
     for row in 0..img.height {
         for col in 0..img.width {
