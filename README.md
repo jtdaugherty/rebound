@@ -4,4 +4,4 @@ rebound
 
 A toy project.
 
-[](demo.png)
+![](demo.png)
