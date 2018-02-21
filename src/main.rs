@@ -313,6 +313,9 @@ fn main() {
             }
 
             color /= samples.len() as f64;
+            color.r = color.r.sqrt();
+            color.g = color.g.sqrt();
+            color.b = color.b.sqrt();
             img.set_pixel(col, row, color);
         }
     }
