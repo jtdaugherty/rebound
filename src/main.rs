@@ -127,25 +127,51 @@ impl Ray {
     }
 }
 
-struct Sphere {
-    center: Vector3<f64>,
-    radius: f64,
-    color: Color,
+struct ScatterResult {
+    ray: Ray,
+    attenuate: Color,
 }
 
-trait Intersectable {
-    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit>;
+trait Material<'a> {
+    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult>;
+}
+
+struct Lambertian {
+    albedo: Color,
+}
+
+impl<'a> Material<'a> for Lambertian {
+    fn scatter(&self, _r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
+        let target = hit.p + hit.normal + samplers::u_sphere_random(s);
+        Some(ScatterResult {
+            ray: Ray {
+                origin: hit.p,
+                direction: target - hit.p,
+            },
+            attenuate: self.albedo,
+        })
+    }
+}
+
+struct Sphere<'a> {
+    center: Vector3<f64>,
+    radius: f64,
+    material: &'a Material<'a>,
+}
+
+trait Intersectable<'a> {
+    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>>;
 }
 
 #[derive(Clone)]
-struct Hit {
+struct Hit<'a> {
     t: f64,
     p: Vector3<f64>,
     normal: Vector3<f64>,
-    color: Color,
+    material: &'a Material<'a>,
 }
 
-impl Hit {
+impl<'a> Hit<'a> {
     fn compare(&self, other: &Hit) -> Ordering {
         if self.t.le(&other.t) {
             Ordering::Less
@@ -155,8 +181,8 @@ impl Hit {
     }
 }
 
-impl Intersectable for Sphere {
-    fn hit(&self, r: &Ray, _: &mut samplers::Sampler) -> Option<Hit> {
+impl<'a> Intersectable<'a> for Sphere<'a> {
+    fn hit(&self, r: &Ray, _: &mut samplers::Sampler) -> Option<Hit<'a>> {
         let oc = r.origin - self.center;
         let a = r.direction.dot(&r.direction);
         let b = 2.0 * oc.dot(&r.direction);
@@ -170,7 +196,7 @@ impl Intersectable for Sphere {
                 let p = r.point_at_distance(t1);
                 Some(Hit {
                     p, t: t1, normal: (p - self.center) / self.radius,
-                    color: self.color,
+                    material: self.material,
                 })
             } else {
                 let t2 = (-b + (b * b - a * c).sqrt()) / a;
@@ -178,7 +204,7 @@ impl Intersectable for Sphere {
                     let p = r.point_at_distance(t2);
                     Some(Hit {
                         p, t: t2, normal: (p - self.center) / self.radius,
-                        color: self.color,
+                        material: self.material,
                     })
                 } else {
                     None
@@ -190,33 +216,36 @@ impl Intersectable for Sphere {
     }
 }
 
-struct World {
-    objects: Vec<Sphere>,
+struct World<'a> {
+    objects: Vec<Sphere<'a>>,
     background: Color,
 }
 
-impl Intersectable for World {
-    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit> {
+impl<'a> Intersectable<'a> for World<'a> {
+    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>> {
         let hits: Vec<Hit> = self.objects.iter()
               .filter_map(|o| o.hit(r, s))
               .collect();
 
-        if let Some(h) = hits.into_iter().min_by(Hit::compare) {
-            let target = h.p + h.normal + samplers::u_sphere_random(s);
+        hits.into_iter().min_by(Hit::compare)
+    }
+}
 
-            let shadow_ray = Ray {
-                origin: h.p,
-                direction: target - h.p,
-            };
-
-            let new_color = match self.hit(&shadow_ray, s) {
-                None => h.color,
-                Some(_) => black(),
-            };
-
-            Some(Hit { color: new_color, ..h })
-        } else {
-            None
+impl<'a> World<'a> {
+    fn color(&self, r: &Ray, s: &mut samplers::Sampler, depth: u32) -> Color {
+        match self.hit(r, s) {
+            None => self.background,
+            Some(h) => {
+                if depth < 50 {
+                    if let Some(sr) = h.material.scatter(r, &h, s) {
+                        self.color(&sr.ray, s, depth + 1) * sr.attenuate
+                    } else {
+                        black()
+                    }
+                } else {
+                    black()
+                }
+            },
         }
     }
 }
@@ -242,19 +271,22 @@ impl Camera for SimpleCamera {
 }
 
 fn main() {
+    let m1 = Lambertian { albedo: Color::new(0.3, 0.3, 0.7), };
+    let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
+
     let s1 = Sphere {
         center: Vector3::new(0.0, 0.0, -1.0),
         radius: 0.5,
-        color: Color::new(1.0, 0.0, 0.0),
+        material: &m1,
     };
     let s2 = Sphere {
-        center: Vector3::new(0.0, -100.5, -1.0),
-        radius: 100.0,
-        color: Color::new(0.0, 0.0, 1.0),
+        center: Vector3::new(0.0, -10000.5, -1.0),
+        radius: 10000.0,
+        material: &m2,
     };
     let w = World {
         objects: vec![s1, s2],
-        background: Color::new(0.2, 0.3, 0.5),
+        background: Color::new(1.0, 1.0, 1.0),
     };
 
     let mut img = Image::new(400, 200, black());
@@ -266,7 +298,7 @@ fn main() {
     };
 
     let mut sampler = samplers::new();
-    let samples = samplers::u_grid_regular(2);
+    let samples = samplers::u_grid_regular(10);
 
     for row in 0..img.height {
         for col in 0..img.width {
@@ -277,10 +309,7 @@ fn main() {
                 let v = ((img.height - 1 - row) as f64 + point.y) / (img.height as f64);
                 let r = cam.get_ray(u, v);
 
-                color += match w.hit(&r, &mut sampler) {
-                    None => w.background,
-                    Some(h) => h.color,
-                };
+                color += w.color(&r, &mut sampler, 0);
             }
 
             color /= samples.len() as f64;
