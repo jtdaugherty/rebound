@@ -401,15 +401,14 @@ fn build_scene() -> World {
 fn main() {
     let w = build_scene();
     let mut img = Image::new(800, 400, black());
+    let mut sampler = samplers::new();
+    let pixel_samples = samplers::u_grid_regular(10);
     let cam = SimpleCamera {
         lower_left: Vector3::new(-2.0, -1.0, -1.0),
         horizontal: Vector3::new(4.0, 0.0, 0.0),
         vertical: Vector3::new(0.0, 2.0, 0.0),
         origin: Vector3::new(0.0, 0.0, 0.3),
     };
-
-    let mut sampler = samplers::new();
-    let pixel_samples = samplers::u_grid_regular(10);
 
     for row in 0..img.height {
         for col in 0..img.width {
