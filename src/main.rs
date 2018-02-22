@@ -356,7 +356,7 @@ impl Camera for SimpleCamera {
     }
 }
 
-fn main() {
+fn build_scene() -> World {
     let s1 = Sphere {
         center: Vector3::new(1.2, 0.0, -1.0),
         radius: 0.5,
@@ -390,12 +390,16 @@ fn main() {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     };
-    let w = World {
+
+    World {
         objects: vec![s1, s2, s3, s4],
         background: Color::new(1.0, 1.0, 1.0),
         max_depth: 20,
-    };
+    }
+}
 
+fn main() {
+    let w = build_scene();
     let mut img = Image::new(800, 400, black());
     let cam = SimpleCamera {
         lower_left: Vector3::new(-2.0, -1.0, -1.0),
