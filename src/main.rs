@@ -397,13 +397,13 @@ fn main() {
     };
 
     let mut sampler = samplers::new();
-    let samples = samplers::u_grid_regular(10);
+    let pixel_samples = samplers::u_grid_regular(10);
 
     for row in 0..img.height {
         for col in 0..img.width {
             let mut color = black();
 
-            for point in &samples {
+            for point in &pixel_samples {
                 let u = (col as f64 + point.x) / (img.width as f64);
                 let v = ((img.height - 1 - row) as f64 + point.y) / (img.height as f64);
                 let r = cam.get_ray(u, v);
@@ -411,7 +411,7 @@ fn main() {
                 color += w.color(&r, &mut sampler, 0);
             }
 
-            color /= samples.len() as f64;
+            color /= pixel_samples.len() as f64;
             color.r = color.r.sqrt();
             color.g = color.g.sqrt();
             color.b = color.b.sqrt();
