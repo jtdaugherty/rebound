@@ -238,14 +238,14 @@ impl Material for Metal {
     }
 }
 
-struct Sphere<'a> {
+struct Sphere {
     center: Vector3<f64>,
     radius: f64,
-    material: &'a Material,
+    material: Box<Material>,
 }
 
-trait Intersectable<'a> {
-    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>>;
+trait Intersectable {
+    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>>;
 }
 
 #[derive(Clone)]
@@ -266,8 +266,8 @@ impl<'a> Hit<'a> {
     }
 }
 
-impl<'a> Intersectable<'a> for Sphere<'a> {
-    fn hit(&self, r: &Ray, _: &mut samplers::Sampler) -> Option<Hit<'a>> {
+impl Intersectable for Sphere {
+    fn hit<'a>(&'a self, r: &Ray, _: &mut samplers::Sampler) -> Option<Hit<'a>> {
         let oc = r.origin - self.center;
         let a = r.direction.dot(&r.direction);
         let b = 2.0 * oc.dot(&r.direction);
@@ -281,7 +281,7 @@ impl<'a> Intersectable<'a> for Sphere<'a> {
                 let p = r.point_at_distance(t1);
                 Some(Hit {
                     p, t: t1, normal: (p - self.center) / self.radius,
-                    material: self.material,
+                    material: self.material.as_ref(),
                 })
             } else {
                 let t2 = (-b + (b * b - a * c).sqrt()) / a;
@@ -289,7 +289,7 @@ impl<'a> Intersectable<'a> for Sphere<'a> {
                     let p = r.point_at_distance(t2);
                     Some(Hit {
                         p, t: t2, normal: (p - self.center) / self.radius,
-                        material: self.material,
+                        material: self.material.as_ref(),
                     })
                 } else {
                     None
@@ -301,14 +301,14 @@ impl<'a> Intersectable<'a> for Sphere<'a> {
     }
 }
 
-struct World<'a> {
-    objects: Vec<Sphere<'a>>,
+struct World {
+    objects: Vec<Sphere>,
     background: Color,
     max_depth: usize,
 }
 
-impl<'a> Intersectable<'a> for World<'a> {
-    fn hit(&self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>> {
+impl Intersectable for World {
+    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>> {
         let hits: Vec<Hit> = self.objects.iter()
               .filter_map(|o| o.hit(r, s))
               .collect();
@@ -317,7 +317,7 @@ impl<'a> Intersectable<'a> for World<'a> {
     }
 }
 
-impl<'a> World<'a> {
+impl World {
     fn color(&self, r: &Ray, s: &mut samplers::Sampler, depth: usize) -> Color {
         match self.hit(r, s) {
             None => self.background,
@@ -357,30 +357,25 @@ impl Camera for SimpleCamera {
 }
 
 fn main() {
-    let m1 = Metal { albedo: Color::new(0.3, 0.3, 0.7), gloss: 0.3, };
-    let m2 = Lambertian { albedo: Color::new(0.5, 0.5, 0.5), };
-    let m3 = Metal { albedo: Color::new(0.9, 0.5, 0.5), gloss: 0.0, };
-    let m4 = Dielectric { ri: 1.5, reflect_gloss: 0.1, refract_gloss: 0.03, color: Color::new(0.2588, 0.702, 0.9567), };
-
     let s1 = Sphere {
         center: Vector3::new(1.2, 0.0, -1.0),
         radius: 0.5,
-        material: &m1,
+        material: Box::new(Metal { albedo: Color::new(0.3, 0.3, 0.7), gloss: 0.3, }),
     };
     let s2 = Sphere {
         center: Vector3::new(-1.2, 0.0, -1.0),
         radius: 0.5,
-        material: &m3,
+        material: Box::new(Metal { albedo: Color::new(0.9, 0.5, 0.5), gloss: 0.0, }),
     };
     let s3 = Sphere {
         center: Vector3::new(0.0, 0.0, -1.0),
         radius: 0.5,
-        material: &m4,
+        material: Box::new(Dielectric { ri: 1.5, reflect_gloss: 0.1, refract_gloss: 0.03, color: Color::new(0.2588, 0.702, 0.9567), }),
     };
     let s4 = Sphere {
         center: Vector3::new(0.0, -10000.5, -1.0),
         radius: 10000.0,
-        material: &m2,
+        material: Box::new(Lambertian { albedo: Color::new(0.5, 0.5, 0.5), }),
     };
     let w = World {
         objects: vec![s1, s2, s3, s4],
