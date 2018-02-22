@@ -147,7 +147,7 @@ struct ScatterResult {
     attenuate: Color,
 }
 
-trait Material<'a> {
+trait Material {
     fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult>;
 }
 
@@ -155,7 +155,7 @@ struct Lambertian {
     albedo: Color,
 }
 
-impl<'a> Material<'a> for Lambertian {
+impl Material for Lambertian {
     fn scatter(&self, _r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
         let target = hit.p + hit.normal + samplers::u_sphere_random(s);
         Some(ScatterResult {
@@ -181,7 +181,7 @@ struct Dielectric {
     color: Color,
 }
 
-impl<'a> Material<'a> for Dielectric {
+impl Material for Dielectric {
     fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
         let refl = reflect(&r.direction, &hit.normal);
 
@@ -218,7 +218,7 @@ struct Metal {
     gloss: f64,
 }
 
-impl<'a> Material<'a> for Metal {
+impl Material for Metal {
     fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
         let reflected = reflect(&r.direction, &hit.normal);
         let fuzz_vec = self.gloss * samplers::u_sphere_random(s);
@@ -241,7 +241,7 @@ impl<'a> Material<'a> for Metal {
 struct Sphere<'a> {
     center: Vector3<f64>,
     radius: f64,
-    material: &'a Material<'a>,
+    material: &'a Material,
 }
 
 trait Intersectable<'a> {
@@ -253,7 +253,7 @@ struct Hit<'a> {
     t: f64,
     p: Vector3<f64>,
     normal: Vector3<f64>,
-    material: &'a Material<'a>,
+    material: &'a Material,
 }
 
 impl<'a> Hit<'a> {
