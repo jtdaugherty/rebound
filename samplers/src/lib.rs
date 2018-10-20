@@ -5,7 +5,6 @@ use nalgebra::{Vector3};
 extern crate rand;
 use rand::IsaacRng;
 use rand::Rng;
-use rand::SeedableRng;
 
 #[macro_use] extern crate itertools;
 
@@ -21,17 +20,15 @@ pub struct Sampler {
 
 impl Sampler {
     pub fn next_f64(&mut self) -> f64 {
-        self.rng.next_f64()
+        self.rng.gen()
     }
 }
 
 pub fn new() -> Sampler {
-    let sz = 8;
     let mut trng = rand::thread_rng();
-    let seed: Vec<u32> = (0..sz).map(|_| trng.gen()).collect();
 
     Sampler {
-        rng: IsaacRng::from_seed(&seed[0..sz]),
+        rng: IsaacRng::new_from_u64(trng.gen())
     }
 }
 
@@ -45,7 +42,7 @@ pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
 
 pub fn u_grid_random(s: &mut Sampler, num_samples: u32) -> Vec<Point2d> {
     (0..num_samples).map(
-        |_| Point2d { x: s.rng.next_f64(), y: s.rng.next_f64(), }).collect()
+        |_| Point2d { x: s.rng.gen(), y: s.rng.gen(), }).collect()
 }
 
 pub fn u_grid_jittered(s: &mut Sampler, root: usize) -> Vec<Point2d> {
@@ -64,9 +61,12 @@ pub fn u_sphere_random(s: &mut Sampler) -> Vector3<f64> {
     let mut v = Vector3::new(5.0, 0.0, 0.0);
 
     while v.dot(&v) >= 1.0 {
-        v.x = 2.0 * s.rng.next_f64() - 1.0;
-        v.y = 2.0 * s.rng.next_f64() - 1.0;
-        v.z = 2.0 * s.rng.next_f64() - 1.0;
+        let xr: f64 = s.rng.gen();
+        let yr: f64 = s.rng.gen();
+        let zr: f64 = s.rng.gen();
+        v.x = 2.0 * xr - 1.0;
+        v.y = 2.0 * yr - 1.0;
+        v.z = 2.0 * zr - 1.0;
     };
 
     v
