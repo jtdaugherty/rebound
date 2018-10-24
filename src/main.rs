@@ -307,8 +307,8 @@ impl Intersectable for Sphere {
 struct World {
     objects: Vec<Box<Intersectable>>,
     background: Color,
-    max_depth: usize,
     camera: Box<Camera>,
+    config: Config,
 }
 
 impl Intersectable for World {
@@ -326,7 +326,7 @@ impl World {
         match self.hit(r, s) {
             None => self.background,
             Some(h) => {
-                if depth < self.max_depth {
+                if depth < self.config.max_depth {
                     if let Some(sr) = h.material.scatter(r, &h, s) {
                         self.color(&sr.ray, s, depth + 1) * sr.attenuate
                     } else {
@@ -360,7 +360,7 @@ impl Camera for SimpleCamera {
     }
 }
 
-fn build_scene() -> World {
+fn build_scene(config: &Config) -> World {
     let s1 = Sphere {
         center: Vector3::new(1.2, 0.0, -1.0),
         radius: 0.5,
@@ -410,8 +410,8 @@ fn build_scene() -> World {
             , Box::new(s4)
         ],
         background: Color::new(1.0, 1.0, 1.0),
-        max_depth: 20,
         camera: Box::new(cam),
+        config: config.clone(),
     }
 }
 
@@ -420,11 +420,13 @@ fn build_scene() -> World {
 struct Config {
     sample_root: usize,
     verbose: bool,
+    max_depth: usize,
 }
 
 static DEFAULT_CONFIG: Config = Config {
     sample_root: 10,
     verbose: false,
+    max_depth: 20,
 };
 
 impl Config {
@@ -442,6 +444,12 @@ impl Config {
                  .value_name("ROOT")
                  .help("Sample root")
                  .takes_value(true))
+            .arg(Arg::with_name("depth")
+                 .short("d")
+                 .long("depth")
+                 .value_name("DEPTH")
+                 .help("Maximum recursion depth")
+                 .takes_value(true))
             .get_matches();
 
         let mut c = DEFAULT_CONFIG.clone();
@@ -449,6 +457,11 @@ impl Config {
         c.sample_root = match ms.value_of("sample-root") {
             Some(v) => { v.parse().unwrap() },
             None => DEFAULT_CONFIG.sample_root,
+        };
+
+        c.max_depth = match ms.value_of("depth") {
+            Some(v) => { v.parse().unwrap() },
+            None => DEFAULT_CONFIG.max_depth,
         };
 
         c.verbose = ms.occurrences_of("verbose") > 0;
@@ -460,6 +473,7 @@ impl Config {
         println!("Renderer configuration:");
         println!("  Verbose: {}", self.verbose);
         println!("  Sample root: {}", self.sample_root);
+        println!("  Maximum depth: {}", self.max_depth);
     }
 }
 
@@ -467,7 +481,7 @@ fn main() {
     let config = Config::new();
     config.show();
 
-    let w = build_scene();
+    let w = build_scene(&config);
     let mut img = Image::new(800, 400, black());
     let mut sampler = samplers::new();
     let pixel_samples = samplers::u_grid_regular(config.sample_root);
