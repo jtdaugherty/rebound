@@ -125,7 +125,7 @@ impl Image {
         self.pixels[h][w] = val;
     }
 
-    fn print(&self, f: &mut File) {
+    fn write(&self, f: &mut File) {
         let mut buf = BufWriter::new(f);
 
         write!(buf, "P3\n{} {}\n255\n", self.width, self.height);
@@ -542,7 +542,7 @@ fn main() {
         println!("Writing output file.");
     }
 
-    img.print(&mut output_file);
+    img.write(&mut output_file);
 
     if !config.quiet {
         println!("Output written to {}", config.output_file);
