@@ -404,18 +404,24 @@ fn build_scene() -> World {
 #[derive(Debug)]
 #[derive(Clone)]
 struct Config {
-    sample_root: usize
+    sample_root: usize,
+    verbose: bool,
 }
 
 static DEFAULT_CONFIG: Config = Config {
-    sample_root: 10
+    sample_root: 10,
+    verbose: false,
 };
 
 impl Config {
-    fn new() -> Result<Config, &'static str> {
+    fn new() -> Config {
         let ms = App::new("rebound")
             .version("0.1")
             .author("Jonathan Daugherty")
+            .arg(Arg::with_name("verbose")
+                 .short("v")
+                 .long("verbose")
+                 .help("Show detailed output"))
             .arg(Arg::with_name("sample-root")
                  .short("r")
                  .long("sample-root")
@@ -431,17 +437,20 @@ impl Config {
             None => DEFAULT_CONFIG.sample_root,
         };
 
-        return Ok(c);
+        c.verbose = ms.occurrences_of("verbose") > 0;
+
+        return c;
     }
 
     fn show(&self) {
         println!("Renderer configuration:");
+        println!("  Verbose: {}", self.verbose);
         println!("  Sample root: {}", self.sample_root);
     }
 }
 
 fn main() {
-    let config = Config::new().unwrap();
+    let config = Config::new();
     config.show();
 
     let w = build_scene();
