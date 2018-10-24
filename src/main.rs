@@ -399,10 +399,10 @@ fn build_scene(config: &Config) -> World {
     };
 
     let cam = SimpleCamera {
-        lower_left: Vector3::new(-2.0, -1.0, -1.0),
+        lower_left: Vector3::new(-2.0, -1.0, -4.0),
         horizontal: Vector3::new(4.0, 0.0, 0.0),
         vertical: Vector3::new(0.0, 2.0, 0.0),
-        origin: Vector3::new(0.0, 0.0, 0.3),
+        origin: Vector3::new(0.0, 0.0, 3.0),
     };
 
     World {
