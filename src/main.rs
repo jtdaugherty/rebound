@@ -477,10 +477,14 @@ impl Config {
 
     fn show(&self) {
         println!("Renderer configuration:");
-        println!("  Verbose: {}", self.verbose);
-        println!("  Sample root: {}", self.sample_root);
-        println!("  Maximum depth: {}", self.max_depth);
-        println!("  Output path: {}", self.output_file);
+        println!("  Verbose:        {}", Config::show_bool(self.verbose));
+        println!("  Sample root:    {}", self.sample_root);
+        println!("  Maximum depth:  {}", self.max_depth);
+        println!("  Output path:    {}", self.output_file);
+    }
+
+    fn show_bool(v: bool) -> String {
+        String::from(if v { "yes" } else { "no" })
     }
 }
 
