@@ -429,7 +429,7 @@ struct Config {
 
 static DEFAULT_OUTPUT_FILENAME: &'static str = "output.ppm";
 static DEFAULT_SAMPLE_ROOT: usize = 1;
-static DEFAULT_MAX_DEPTH: usize = 1;
+static DEFAULT_MAX_DEPTH: usize = 3;
 
 impl Config {
     fn new() -> Config {
