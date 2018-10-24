@@ -7,6 +7,9 @@ use nalgebra::{Vector3};
 use std::cmp::Ordering;
 use clap::{Arg, App};
 
+use std::fs::File;
+use std::io::Write;
+
 use std::ops::DivAssign;
 use std::ops::AddAssign;
 use std::ops::Mul;
@@ -120,14 +123,14 @@ impl Image {
         self.pixels[h][w] = val;
     }
 
-    fn print(&self) {
-        println!("P3\n{} {}\n255", self.width, self.height);
+    fn print(&self, f: &mut File) {
+        write!(f, "P3\n{} {}\n255", self.width, self.height);
         for row in &self.pixels {
             for pixel in row {
-                println!("{} {} {}",
-                         (pixel.r * 255.0) as u8,
-                         (pixel.g * 255.0) as u8,
-                         (pixel.b * 255.0) as u8);
+                write!(f, "{} {} {}",
+                       (pixel.r * 255.0) as u8,
+                       (pixel.g * 255.0) as u8,
+                       (pixel.b * 255.0) as u8);
             }
         }
     }
@@ -497,6 +500,8 @@ fn main() {
     let mut sampler = samplers::new();
     let pixel_samples = samplers::u_grid_regular(config.sample_root);
 
+    let mut output_file = File::create(config.output_file).unwrap();
+
     for row in 0..img.height {
         for col in 0..img.width {
             let mut color = black();
@@ -517,5 +522,5 @@ fn main() {
         }
     }
 
-    img.print();
+    img.print(&mut output_file);
 }
