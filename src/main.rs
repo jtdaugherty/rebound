@@ -159,6 +159,7 @@ struct ScatterResult {
 
 trait Material {
     fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult>;
+    fn emitted(&self) -> Color;
 }
 
 struct Lambertian {
@@ -166,6 +167,10 @@ struct Lambertian {
 }
 
 impl Material for Lambertian {
+    fn emitted(&self) -> Color {
+        black()
+    }
+
     fn scatter(&self, _r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
         let target = hit.p + hit.normal + samplers::u_sphere_random(s);
         Some(ScatterResult {
@@ -192,6 +197,10 @@ struct Dielectric {
 }
 
 impl Material for Dielectric {
+    fn emitted(&self) -> Color {
+        black()
+    }
+
     fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
         let refl = reflect(&r.direction, &hit.normal);
 
@@ -223,12 +232,30 @@ impl Material for Dielectric {
     }
 }
 
+struct Emissive {
+    color: Color,
+}
+
+impl Material for Emissive {
+    fn emitted(&self) -> Color {
+        self.color
+    }
+
+    fn scatter(&self, _r: &Ray, _hit: &Hit, _s: &mut samplers::Sampler) -> Option<ScatterResult> {
+        None
+    }
+}
+
 struct Metal {
     albedo: Color,
     gloss: f64,
 }
 
 impl Material for Metal {
+    fn emitted(&self) -> Color {
+        black()
+    }
+
     fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
         let reflected = reflect(&r.direction, &hit.normal);
         let fuzz_vec = self.gloss * samplers::u_sphere_random(s);
@@ -333,14 +360,15 @@ impl World {
         match self.hit(r, s) {
             None => self.background,
             Some(h) => {
+                let emitted = h.material.emitted();
                 if depth < self.config.max_depth {
                     if let Some(sr) = h.material.scatter(r, &h, s) {
-                        self.color(&sr.ray, s, depth + 1) * sr.attenuate
+                        emitted + self.color(&sr.ray, s, depth + 1) * sr.attenuate
                     } else {
-                        black()
+                        emitted
                     }
                 } else {
-                    black()
+                    emitted
                 }
             },
         }
@@ -420,6 +448,20 @@ fn build_scene(config: &Config) -> World {
             gloss: 0.01,
         }),
     };
+    let s_light1 = Sphere {
+        center: Vector3::new(10.0, 12.0, -2.0),
+        radius: 5.0,
+        material: Box::new(Emissive {
+            color: Color::all(1.0),
+        }),
+    };
+    let s_light2 = Sphere {
+        center: Vector3::new(-10.0, 12.0, -2.0),
+        radius: 5.0,
+        material: Box::new(Emissive {
+            color: Color::all(1.0),
+        }),
+    };
 
     let s_ground = Sphere {
         center: Vector3::new(0.0, -10000.5, -1.0),
@@ -445,8 +487,10 @@ fn build_scene(config: &Config) -> World {
             Box::new(s_left_back),
             Box::new(s_right_back),
             Box::new(s_ground),
+            Box::new(s_light1),
+            Box::new(s_light2),
         ],
-        background: Color::new(1.0, 1.0, 1.0),
+        background: Color::all(0.1),
         camera: Box::new(cam),
         config: config.clone(),
     }
@@ -557,9 +601,11 @@ fn main() {
             }
 
             color /= pixel_samples.len() as f64;
+
             color.r = color.r.sqrt();
             color.g = color.g.sqrt();
             color.b = color.b.sqrt();
+
             img.set_pixel(col, row, color);
         }
 
