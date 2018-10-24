@@ -10,6 +10,7 @@ use clap::{Arg, App};
 use std::fs::File;
 use std::io::Write;
 use std::io::stdout;
+use std::io::BufWriter;
 
 use std::ops::DivAssign;
 use std::ops::AddAssign;
@@ -125,10 +126,12 @@ impl Image {
     }
 
     fn print(&self, f: &mut File) {
-        write!(f, "P3\n{} {}\n255\n", self.width, self.height);
+        let mut buf = BufWriter::new(f);
+
+        write!(buf, "P3\n{} {}\n255\n", self.width, self.height);
         for row in &self.pixels {
             for pixel in row {
-                write!(f, "{} {} {}\n",
+                write!(buf, "{} {} {}\n",
                        (pixel.r * 255.0) as u8,
                        (pixel.g * 255.0) as u8,
                        (pixel.b * 255.0) as u8);
