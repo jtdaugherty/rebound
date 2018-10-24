@@ -124,10 +124,10 @@ impl Image {
     }
 
     fn print(&self, f: &mut File) {
-        write!(f, "P3\n{} {}\n255", self.width, self.height);
+        write!(f, "P3\n{} {}\n255\n", self.width, self.height);
         for row in &self.pixels {
             for pixel in row {
-                write!(f, "{} {} {}",
+                write!(f, "{} {} {}\n",
                        (pixel.r * 255.0) as u8,
                        (pixel.g * 255.0) as u8,
                        (pixel.b * 255.0) as u8);
