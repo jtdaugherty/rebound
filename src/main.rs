@@ -510,15 +510,17 @@ fn main() {
         println!("Rendering...");
     }
 
-    let total_pixels = img.height * img.width;
+    let total_pixels = (img.height * img.width) as f64;
+    let img_h = img.height as f64;
+    let img_w = img.width as f64;
 
     for row in 0..img.height {
         for col in 0..img.width {
             let mut color = black();
 
             for point in &pixel_samples {
-                let u = (col as f64 + point.x) / (img.width as f64);
-                let v = ((img.height - 1 - row) as f64 + point.y) / (img.height as f64);
+                let u = (col as f64 + point.x) / img_w;
+                let v = ((img.height - 1 - row) as f64 + point.y) / img_h;
                 let r = w.camera.get_ray(u, v);
 
                 color += w.color(&r, &mut sampler, 0);
@@ -531,7 +533,7 @@ fn main() {
             img.set_pixel(col, row, color);
         }
 
-        let progress = 100.0 * (((row + 1) * img.width) as f64) / (total_pixels as f64);
+        let progress = 100.0 * (((row + 1) * img.width) as f64) / total_pixels;
         print!("  {} %\r", progress as u32);
         stdout().flush().unwrap();
     }
