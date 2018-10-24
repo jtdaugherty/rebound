@@ -369,29 +369,39 @@ impl Camera for SimpleCamera {
 
 fn build_scene(config: &Config) -> World {
     let s_right_front = Sphere {
-        center: Vector3::new(1.2, 0.0, -1.0),
+        center: Vector3::new(1.2, 0.0, -0.6),
         radius: 0.5,
         material: Box::new(Metal {
             albedo: Color::new(0.3, 0.3, 0.7),
             gloss: 0.3,
         }),
     };
-    let s_middle_front = Sphere {
-        center: Vector3::new(0.0, 0.0, -1.0),
-        radius: 0.5,
+    let s_middle_front_1 = Sphere {
+        center: Vector3::new(0.3, -0.25, -1.0),
+        radius: 0.25,
         material: Box::new(Dielectric {
-            ri: 1.5,
+            ri: 1.05,
+            reflect_gloss: 0.0,
+            refract_gloss: 0.0,
+            color: Color::new(0.2588, 0.702, 0.9567),
+        }),
+    };
+    let s_middle_front_2 = Sphere {
+        center: Vector3::new(-0.3, -0.25, -1.0),
+        radius: 0.25,
+        material: Box::new(Dielectric {
+            ri: 1.31,
             reflect_gloss: 0.1,
             refract_gloss: 0.03,
             color: Color::new(0.2588, 0.702, 0.9567),
         }),
     };
     let s_left_front = Sphere {
-        center: Vector3::new(-1.2, 0.0, -1.0),
+        center: Vector3::new(-1.2, 0.0, -0.6),
         radius: 0.5,
         material: Box::new(Metal {
             albedo: Color::new(0.9, 0.5, 0.5),
-            gloss: 0.0,
+            gloss: 0.01,
         }),
     };
     let s_right_back = Sphere {
@@ -407,7 +417,7 @@ fn build_scene(config: &Config) -> World {
         radius: 0.5,
         material: Box::new(Metal {
             albedo: Color::new(0.97, 0.56, 0.26),
-            gloss: 0.0,
+            gloss: 0.01,
         }),
     };
 
@@ -429,7 +439,8 @@ fn build_scene(config: &Config) -> World {
     World {
         objects: vec![
             Box::new(s_left_front),
-            Box::new(s_middle_front),
+            Box::new(s_middle_front_1),
+            Box::new(s_middle_front_2),
             Box::new(s_right_front),
             Box::new(s_left_back),
             Box::new(s_right_back),
