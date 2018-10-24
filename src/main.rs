@@ -368,7 +368,7 @@ impl Camera for SimpleCamera {
 }
 
 fn build_scene(config: &Config) -> World {
-    let s1 = Sphere {
+    let s_right_front = Sphere {
         center: Vector3::new(1.2, 0.0, -1.0),
         radius: 0.5,
         material: Box::new(Metal {
@@ -376,15 +376,7 @@ fn build_scene(config: &Config) -> World {
             gloss: 0.3,
         }),
     };
-    let s2 = Sphere {
-        center: Vector3::new(-1.2, 0.0, -1.0),
-        radius: 0.5,
-        material: Box::new(Metal {
-            albedo: Color::new(0.9, 0.5, 0.5),
-            gloss: 0.0,
-        }),
-    };
-    let s3 = Sphere {
+    let s_middle_front = Sphere {
         center: Vector3::new(0.0, 0.0, -1.0),
         radius: 0.5,
         material: Box::new(Dielectric {
@@ -394,7 +386,32 @@ fn build_scene(config: &Config) -> World {
             color: Color::new(0.2588, 0.702, 0.9567),
         }),
     };
-    let s4 = Sphere {
+    let s_left_front = Sphere {
+        center: Vector3::new(-1.2, 0.0, -1.0),
+        radius: 0.5,
+        material: Box::new(Metal {
+            albedo: Color::new(0.9, 0.5, 0.5),
+            gloss: 0.0,
+        }),
+    };
+    let s_right_back = Sphere {
+        center: Vector3::new(0.6, 0.0, -2.0),
+        radius: 0.5,
+        material: Box::new(Metal {
+            albedo: Color::new(0.4, 0.6, 0.1),
+            gloss: 0.4,
+        }),
+    };
+    let s_left_back = Sphere {
+        center: Vector3::new(-0.6, 0.0, -2.0),
+        radius: 0.5,
+        material: Box::new(Metal {
+            albedo: Color::new(0.97, 0.56, 0.26),
+            gloss: 0.0,
+        }),
+    };
+
+    let s_ground = Sphere {
         center: Vector3::new(0.0, -10000.5, -1.0),
         radius: 10000.0,
         material: Box::new(Lambertian {
@@ -411,10 +428,12 @@ fn build_scene(config: &Config) -> World {
 
     World {
         objects: vec![
-            Box::new(s1)
-            , Box::new(s2)
-            , Box::new(s3)
-            , Box::new(s4)
+            Box::new(s_left_front),
+            Box::new(s_middle_front),
+            Box::new(s_right_front),
+            Box::new(s_left_back),
+            Box::new(s_right_back),
+            Box::new(s_ground),
         ],
         background: Color::new(1.0, 1.0, 1.0),
         camera: Box::new(cam),
