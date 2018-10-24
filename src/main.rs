@@ -484,7 +484,9 @@ impl Config {
 
     fn show(&self) {
         println!("Renderer configuration:");
-        println!("  Sample root:    {}", self.sample_root);
+        println!("  Sample root:    {} ({} pixel sample{})",
+           self.sample_root, self.sample_root * self.sample_root,
+           if self.sample_root == 1 { "" } else { "s" });
         println!("  Maximum depth:  {}", self.max_depth);
         println!("  Output path:    {}", self.output_file);
     }
