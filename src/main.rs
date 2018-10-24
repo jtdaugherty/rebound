@@ -409,7 +409,7 @@ fn build_scene(config: &Config) -> World {
         radius: 0.5,
         material: Box::new(Metal {
             albedo: Color::new(0.4, 0.6, 0.1),
-            gloss: 0.4,
+            gloss: 2.0,
         }),
     };
     let s_left_back = Sphere {
