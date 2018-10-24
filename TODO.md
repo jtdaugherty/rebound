@@ -2,6 +2,10 @@
 Short-term
 ==========
 
+* Hemisphere and disc sampling
+  * So we can have per-pixel sample sets for scattering that have good
+    distribution
+
 * Need output machinery
   * Image accumulator thread
   * Worker threads work on regions of the image and send chunks to
