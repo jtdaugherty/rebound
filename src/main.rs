@@ -305,7 +305,7 @@ impl Intersectable for Sphere {
 }
 
 struct World {
-    objects: Vec<Sphere>,
+    objects: Vec<Box<Intersectable>>,
     background: Color,
     max_depth: usize,
     camera: Box<Camera>,
@@ -403,7 +403,12 @@ fn build_scene() -> World {
     };
 
     World {
-        objects: vec![s1, s2, s3, s4],
+        objects: vec![
+            Box::new(s1)
+            , Box::new(s2)
+            , Box::new(s3)
+            , Box::new(s4)
+        ],
         background: Color::new(1.0, 1.0, 1.0),
         max_depth: 20,
         camera: Box::new(cam),
