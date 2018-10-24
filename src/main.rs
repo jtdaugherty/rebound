@@ -308,6 +308,7 @@ struct World {
     objects: Vec<Sphere>,
     background: Color,
     max_depth: usize,
+    camera: Box<Camera>,
 }
 
 impl Intersectable for World {
@@ -394,10 +395,18 @@ fn build_scene() -> World {
         }),
     };
 
+    let cam = SimpleCamera {
+        lower_left: Vector3::new(-2.0, -1.0, -1.0),
+        horizontal: Vector3::new(4.0, 0.0, 0.0),
+        vertical: Vector3::new(0.0, 2.0, 0.0),
+        origin: Vector3::new(0.0, 0.0, 0.3),
+    };
+
     World {
         objects: vec![s1, s2, s3, s4],
         background: Color::new(1.0, 1.0, 1.0),
         max_depth: 20,
+        camera: Box::new(cam),
     }
 }
 
@@ -457,12 +466,6 @@ fn main() {
     let mut img = Image::new(800, 400, black());
     let mut sampler = samplers::new();
     let pixel_samples = samplers::u_grid_regular(config.sample_root);
-    let cam = SimpleCamera {
-        lower_left: Vector3::new(-2.0, -1.0, -1.0),
-        horizontal: Vector3::new(4.0, 0.0, 0.0),
-        vertical: Vector3::new(0.0, 2.0, 0.0),
-        origin: Vector3::new(0.0, 0.0, 0.3),
-    };
 
     for row in 0..img.height {
         for col in 0..img.width {
@@ -471,7 +474,7 @@ fn main() {
             for point in &pixel_samples {
                 let u = (col as f64 + point.x) / (img.width as f64);
                 let v = ((img.height - 1 - row) as f64 + point.y) / (img.height as f64);
-                let r = cam.get_ray(u, v);
+                let r = w.camera.get_ray(u, v);
 
                 color += w.color(&r, &mut sampler, 0);
             }
