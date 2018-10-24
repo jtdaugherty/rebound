@@ -421,13 +421,12 @@ struct Config {
     sample_root: usize,
     verbose: bool,
     max_depth: usize,
+    output_file: String,
 }
 
-static DEFAULT_CONFIG: Config = Config {
-    sample_root: 10,
-    verbose: false,
-    max_depth: 20,
-};
+static DEFAULT_OUTPUT_FILENAME: &'static str = "output.ppm";
+static DEFAULT_SAMPLE_ROOT: usize = 10;
+static DEFAULT_MAX_DEPTH: usize = 20;
 
 impl Config {
     fn new() -> Config {
@@ -450,23 +449,30 @@ impl Config {
                  .value_name("DEPTH")
                  .help("Maximum recursion depth")
                  .takes_value(true))
+            .arg(Arg::with_name("output-file")
+                 .short("o")
+                 .long("output-file")
+                 .value_name("FILENAME")
+                 .help("Output filename path")
+                 .takes_value(true))
             .get_matches();
 
-        let mut c = DEFAULT_CONFIG.clone();
-
-        c.sample_root = match ms.value_of("sample-root") {
-            Some(v) => { v.parse().unwrap() },
-            None => DEFAULT_CONFIG.sample_root,
+        return Config {
+            verbose: ms.occurrences_of("verbose") > 0,
+            sample_root: match ms.value_of("sample-root") {
+                Some(v) => { v.parse().unwrap() },
+                None => DEFAULT_SAMPLE_ROOT,
+            },
+            max_depth: match ms.value_of("depth") {
+                Some(v) => { v.parse().unwrap() },
+                None => DEFAULT_MAX_DEPTH,
+            },
+            output_file: match ms.occurrences_of("output-file") {
+                0 => String::from(DEFAULT_OUTPUT_FILENAME),
+                1 => String::from(ms.value_of("output-file").unwrap()),
+                _ => panic!("Bad!"),
+            },
         };
-
-        c.max_depth = match ms.value_of("depth") {
-            Some(v) => { v.parse().unwrap() },
-            None => DEFAULT_CONFIG.max_depth,
-        };
-
-        c.verbose = ms.occurrences_of("verbose") > 0;
-
-        return c;
     }
 
     fn show(&self) {
@@ -474,6 +480,7 @@ impl Config {
         println!("  Verbose: {}", self.verbose);
         println!("  Sample root: {}", self.sample_root);
         println!("  Maximum depth: {}", self.max_depth);
+        println!("  Output path: {}", self.output_file);
     }
 }
 
