@@ -9,6 +9,7 @@ use clap::{Arg, App};
 
 use std::fs::File;
 use std::io::Write;
+use std::io::stdout;
 
 use std::ops::DivAssign;
 use std::ops::AddAssign;
@@ -504,6 +505,8 @@ fn main() {
         println!("Rendering...");
     }
 
+    let total_pixels = img.height * img.width;
+
     for row in 0..img.height {
         for col in 0..img.width {
             let mut color = black();
@@ -522,6 +525,16 @@ fn main() {
             color.b = color.b.sqrt();
             img.set_pixel(col, row, color);
         }
+
+        let progress = 100.0 * (((row + 1) * img.width) as f64) / (total_pixels as f64);
+        print!("  {} %\r", progress as u32);
+        stdout().flush().unwrap();
+    }
+
+    println!("");
+
+    if !config.quiet {
+        println!("Writing output file.");
     }
 
     img.print(&mut output_file);
