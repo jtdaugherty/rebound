@@ -422,7 +422,7 @@ fn build_scene(config: &Config) -> World {
 #[derive(Clone)]
 struct Config {
     sample_root: usize,
-    verbose: bool,
+    quiet: bool,
     max_depth: usize,
     output_file: String,
 }
@@ -436,10 +436,10 @@ impl Config {
         let ms = App::new("rebound")
             .version("0.1")
             .author("Jonathan Daugherty")
-            .arg(Arg::with_name("verbose")
-                 .short("v")
-                 .long("verbose")
-                 .help("Show detailed output"))
+            .arg(Arg::with_name("quiet")
+                 .short("q")
+                 .long("quiet")
+                 .help("Suppress all console output"))
             .arg(Arg::with_name("sample-root")
                  .short("r")
                  .long("sample-root")
@@ -461,7 +461,7 @@ impl Config {
             .get_matches();
 
         return Config {
-            verbose: ms.occurrences_of("verbose") > 0,
+            quiet: ms.occurrences_of("quiet") > 0,
             sample_root: match ms.value_of("sample-root") {
                 Some(v) => { v.parse().unwrap() },
                 None => DEFAULT_SAMPLE_ROOT,
@@ -480,27 +480,29 @@ impl Config {
 
     fn show(&self) {
         println!("Renderer configuration:");
-        println!("  Verbose:        {}", Config::show_bool(self.verbose));
         println!("  Sample root:    {}", self.sample_root);
         println!("  Maximum depth:  {}", self.max_depth);
         println!("  Output path:    {}", self.output_file);
-    }
-
-    fn show_bool(v: bool) -> String {
-        String::from(if v { "yes" } else { "no" })
     }
 }
 
 fn main() {
     let config = Config::new();
-    config.show();
+
+    if !config.quiet {
+        config.show();
+    }
 
     let w = build_scene(&config);
     let mut img = Image::new(800, 400, black());
     let mut sampler = samplers::new();
     let pixel_samples = samplers::u_grid_regular(config.sample_root);
 
-    let mut output_file = File::create(config.output_file).unwrap();
+    let mut output_file = File::create(config.output_file.clone()).unwrap();
+
+    if !config.quiet {
+        println!("Rendering...");
+    }
 
     for row in 0..img.height {
         for col in 0..img.width {
@@ -523,4 +525,8 @@ fn main() {
     }
 
     img.print(&mut output_file);
+
+    if !config.quiet {
+        println!("Output written to {}", config.output_file);
+    }
 }
