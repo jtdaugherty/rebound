@@ -477,7 +477,7 @@ impl Config {
             output_file: match ms.occurrences_of("output-file") {
                 0 => String::from(DEFAULT_OUTPUT_FILENAME),
                 1 => String::from(ms.value_of("output-file").unwrap()),
-                _ => panic!("Bad!"),
+                _ => panic!("BUG: output file specified more than once"),
             },
         };
     }
