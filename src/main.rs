@@ -1,8 +1,11 @@
 extern crate samplers;
 
 extern crate nalgebra;
+extern crate clap;
+
 use nalgebra::{Vector3};
 use std::cmp::Ordering;
+use clap::{Arg, App};
 
 use std::ops::DivAssign;
 use std::ops::AddAssign;
@@ -398,11 +401,53 @@ fn build_scene() -> World {
     }
 }
 
+#[derive(Debug)]
+#[derive(Clone)]
+struct Config {
+    sample_root: usize
+}
+
+static DEFAULT_CONFIG: Config = Config {
+    sample_root: 10
+};
+
+impl Config {
+    fn new() -> Result<Config, &'static str> {
+        let ms = App::new("rebound")
+            .version("0.1")
+            .author("Jonathan Daugherty")
+            .arg(Arg::with_name("sample-root")
+                 .short("r")
+                 .long("sample-root")
+                 .value_name("ROOT")
+                 .help("Sample root")
+                 .takes_value(true))
+            .get_matches();
+
+        let mut c = DEFAULT_CONFIG.clone();
+
+        c.sample_root = match ms.value_of("sample-root") {
+            Some(v) => { v.parse().unwrap() },
+            None => DEFAULT_CONFIG.sample_root,
+        };
+
+        return Ok(c);
+    }
+
+    fn show(&self) {
+        println!("Renderer configuration:");
+        println!("  Sample root: {}", self.sample_root);
+    }
+}
+
 fn main() {
+    let config = Config::new().unwrap();
+    config.show();
+
     let w = build_scene();
     let mut img = Image::new(800, 400, black());
     let mut sampler = samplers::new();
-    let pixel_samples = samplers::u_grid_regular(10);
+    let pixel_samples = samplers::u_grid_regular(config.sample_root);
     let cam = SimpleCamera {
         lower_left: Vector3::new(-2.0, -1.0, -1.0),
         horizontal: Vector3::new(4.0, 0.0, 0.0),
