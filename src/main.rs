@@ -132,9 +132,9 @@ impl Image {
         for row in &self.pixels {
             for pixel in row {
                 write!(buf, "{} {} {}\n",
-                       (pixel.r * 255.0) as u8,
-                       (pixel.g * 255.0) as u8,
-                       (pixel.b * 255.0) as u8);
+                       (pixel.r * 255.99) as u8,
+                       (pixel.g * 255.99) as u8,
+                       (pixel.b * 255.99) as u8);
             }
         }
     }
