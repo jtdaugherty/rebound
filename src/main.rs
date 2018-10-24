@@ -493,12 +493,12 @@ fn main() {
         config.show();
     }
 
+    let mut output_file = File::create(config.output_file.clone()).unwrap();
+
     let w = build_scene(&config);
     let mut img = Image::new(800, 400, black());
     let mut sampler = samplers::new();
     let pixel_samples = samplers::u_grid_regular(config.sample_root);
-
-    let mut output_file = File::create(config.output_file.clone()).unwrap();
 
     if !config.quiet {
         println!("Rendering...");
