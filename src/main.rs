@@ -158,7 +158,7 @@ struct ScatterResult {
 }
 
 trait Material {
-    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult>;
+    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult>;
     fn emitted(&self) -> Color;
 }
 
@@ -171,7 +171,7 @@ impl Material for Lambertian {
         black()
     }
 
-    fn scatter(&self, _r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
+    fn scatter(&self, _r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult> {
         let target = hit.p + hit.normal + samplers::u_sphere_random(s);
         Some(ScatterResult {
             ray: Ray {
@@ -201,7 +201,7 @@ impl Material for Dielectric {
         black()
     }
 
-    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
+    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult> {
         let refl = reflect(&r.direction, &hit.normal);
 
         let (outward_normal, ni_nt, cosine) = if r.direction.dot(&hit.normal) > 0.0 {
@@ -241,7 +241,7 @@ impl Material for Emissive {
         self.color
     }
 
-    fn scatter(&self, _r: &Ray, _hit: &Hit, _s: &mut samplers::Sampler) -> Option<ScatterResult> {
+    fn scatter(&self, _r: &Ray, _hit: &Hit, _s: &mut samplers::SampleSource) -> Option<ScatterResult> {
         None
     }
 }
@@ -256,7 +256,7 @@ impl Material for Metal {
         black()
     }
 
-    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::Sampler) -> Option<ScatterResult> {
+    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult> {
         let reflected = reflect(&r.direction, &hit.normal);
         let fuzz_vec = self.gloss * samplers::u_sphere_random(s);
         let dir = reflected + fuzz_vec;
@@ -282,7 +282,7 @@ struct Sphere {
 }
 
 trait Intersectable {
-    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>>;
+    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::SampleSource) -> Option<Hit<'a>>;
 }
 
 #[derive(Clone)]
@@ -304,7 +304,7 @@ impl<'a> Hit<'a> {
 }
 
 impl Intersectable for Sphere {
-    fn hit<'a>(&'a self, r: &Ray, _: &mut samplers::Sampler) -> Option<Hit<'a>> {
+    fn hit<'a>(&'a self, r: &Ray, _: &mut samplers::SampleSource) -> Option<Hit<'a>> {
         let oc = r.origin - self.center;
         let a = r.direction.dot(&r.direction);
         let b = 2.0 * oc.dot(&r.direction);
@@ -346,7 +346,7 @@ struct World {
 }
 
 impl Intersectable for World {
-    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::Sampler) -> Option<Hit<'a>> {
+    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::SampleSource) -> Option<Hit<'a>> {
         let hits: Vec<Hit> = self.objects.iter()
               .filter_map(|o| o.hit(r, s))
               .collect();
@@ -356,7 +356,7 @@ impl Intersectable for World {
 }
 
 impl World {
-    fn color(&self, r: &Ray, s: &mut samplers::Sampler, depth: usize) -> Color {
+    fn color(&self, r: &Ray, s: &mut samplers::SampleSource, depth: usize) -> Color {
         match self.hit(r, s) {
             None => self.background,
             Some(h) => {

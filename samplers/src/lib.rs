@@ -14,20 +14,20 @@ pub struct Point2d {
     pub y: f64,
 }
 
-pub struct Sampler {
+pub struct SampleSource {
     rng: IsaacRng,
 }
 
-impl Sampler {
+impl SampleSource {
     pub fn next_f64(&mut self) -> f64 {
         self.rng.gen()
     }
 }
 
-pub fn new() -> Sampler {
+pub fn new() -> SampleSource {
     let mut trng = rand::thread_rng();
 
-    Sampler {
+    SampleSource {
         rng: IsaacRng::new_from_u64(trng.gen())
     }
 }
@@ -40,12 +40,12 @@ pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
         |(x, y)| Point2d { x: x.clone(), y: y.clone(), }).collect()
 }
 
-pub fn u_grid_random(s: &mut Sampler, num_samples: u32) -> Vec<Point2d> {
+pub fn u_grid_random(s: &mut SampleSource, num_samples: u32) -> Vec<Point2d> {
     (0..num_samples).map(
         |_| Point2d { x: s.rng.gen(), y: s.rng.gen(), }).collect()
 }
 
-pub fn u_grid_jittered(s: &mut Sampler, root: usize) -> Vec<Point2d> {
+pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<Point2d> {
     let increment = 1.0 / ((root as f64) + 1.0);
     let lo = -0.5 * increment;
     let hi = 0.5 * increment;
@@ -57,7 +57,7 @@ pub fn u_grid_jittered(s: &mut Sampler, root: usize) -> Vec<Point2d> {
         }).collect()
 }
 
-pub fn u_sphere_random(s: &mut Sampler) -> Vector3<f64> {
+pub fn u_sphere_random(s: &mut SampleSource) -> Vector3<f64> {
     let mut v = Vector3::new(5.0, 0.0, 0.0);
 
     while v.dot(&v) >= 1.0 {
