@@ -6,6 +6,9 @@ Short-term
   * So we can have per-pixel sample sets for scattering that have good
     distribution
 
+* Light power settings (look at how the ground up book does this and see
+how we can adapt it)
+
 * Need output machinery
   * Image accumulator thread
   * Worker threads work on regions of the image and send chunks to
