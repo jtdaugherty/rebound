@@ -40,11 +40,6 @@ pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
         |(x, y)| Point2d { x: x.clone(), y: y.clone(), }).collect()
 }
 
-pub fn u_grid_random(s: &mut SampleSource, num_samples: u32) -> Vec<Point2d> {
-    (0..num_samples).map(
-        |_| Point2d { x: s.rng.gen(), y: s.rng.gen(), }).collect()
-}
-
 pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<Point2d> {
     let increment = 1.0 / ((root as f64) + 1.0);
     let lo = -0.5 * increment;
