@@ -578,7 +578,11 @@ fn main() {
     let w = build_scene(&config);
     let mut img = Image::new(800, 400, black());
     let mut sampler = samplers::new();
-    let pixel_samples = samplers::u_grid_regular(config.sample_root);
+    let pixel_samples = if config.sample_root == 1 {
+        samplers::u_grid_regular(config.sample_root)
+    } else {
+        samplers::u_grid_jittered(&mut sampler, config.sample_root)
+    };
 
     if !config.quiet {
         println!("Rendering...");
