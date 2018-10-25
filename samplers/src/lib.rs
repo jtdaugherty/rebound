@@ -71,11 +71,3 @@ pub fn u_sphere_random(s: &mut SampleSource) -> Vector3<f64> {
 
     v
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
