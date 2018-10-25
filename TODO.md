@@ -14,6 +14,10 @@ how we can adapt it)
   * Worker threads work on regions of the image and send chunks to
     accumulator
 
+* Test lambertian and metal scattering with hemisphere sampling rather
+than spherical sampling with rejection, compare results at high sample
+counts
+
 * Command-line arguments (control over sampling, etc.)
 
 * BVH/bounding boxes etc
