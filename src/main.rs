@@ -263,17 +263,13 @@ impl Material for Metal {
         let fuzz_vec = self.gloss * sv;
         let dir = reflected + fuzz_vec;
 
-        if dir.dot(&hit.normal) > 0.0 {
-            Some(ScatterResult {
-                ray: Ray {
-                    origin: hit.p,
-                    direction: dir,
-                },
-                attenuate: self.albedo,
-            })
-        } else {
-            None
-        }
+        Some(ScatterResult {
+            ray: Ray {
+                origin: hit.p,
+                direction: dir,
+            },
+            attenuate: self.albedo,
+        })
     }
 }
 
