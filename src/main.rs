@@ -1,441 +1,92 @@
-extern crate samplers;
-extern crate nalgebra;
-extern crate clap;
-extern crate rand;
-
-use nalgebra::{Vector3};
-use std::cmp::Ordering;
-use clap::{Arg, App};
 
 use std::fs::File;
 use std::io::Write;
 use std::io::stdout;
-use std::io::BufWriter;
 
-use std::ops::DivAssign;
-use std::ops::AddAssign;
-use std::ops::Mul;
-use std::ops::Add;
+extern crate nalgebra;
+use nalgebra::{Vector3};
 
+extern crate rand;
 use rand::Rng;
 
-const T_MIN: f64 = 0.0005;
+extern crate samplers;
+mod types;
+mod materials;
+mod cameras;
+mod sphere;
+mod constants;
+mod util;
+mod scene;
+mod args;
 
-#[derive(Clone)]
-#[derive(Copy)]
-struct Color {
-    r: f64,
-    g: f64,
-    b: f64,
-}
+use types::*;
 
-fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
-    v - 2.0 * v.dot(&n) * n
-}
-
-// fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_nt: f64) -> Option<Vector3<f64>> {
-//     let uv = v.normalize();
-//     let dt = uv.dot(n);
-//     let desc = 1.0 - ni_nt * ni_nt * (1.0 - dt * dt);
-//     if desc > 0.0 {
-//         Some(ni_nt * (uv - n * dt) - n * desc.sqrt())
-//     } else {
-//         None
-//     }
-// }
-
-impl DivAssign<f64> for Color {
-    fn div_assign(&mut self, d: f64) {
-        self.r /= d;
-        self.g /= d;
-        self.b /= d;
-    }
-}
-
-impl AddAssign for Color {
-    fn add_assign(&mut self, other: Color) {
-        self.r += other.r;
-        self.g += other.g;
-        self.b += other.b;
-    }
-}
-
-impl Color {
-    fn new(r: f64, g: f64, b: f64) -> Color {
-        Color { r, g, b }
-    }
-
-    fn all(v: f64) -> Color {
-       Color::new(v, v, v)
-    }
-}
-
-fn black() -> Color { Color::all(0.0) }
-
-impl Mul<Color> for Color {
-    type Output = Self;
-
-    fn mul(self, other: Color) -> Color {
-        Color {
-            r: self.r * other.r,
-            g: self.g * other.g,
-            b: self.b * other.b,
-        }
-    }
-}
-
-impl Mul<f64> for Color {
-    type Output = Self;
-
-    fn mul(self, other: f64) -> Color {
-        Color {
-            r: self.r * other,
-            g: self.g * other,
-            b: self.b * other,
-        }
-    }
-}
-
-impl Add<Color> for Color {
-    type Output = Self;
-
-    fn add(self, other: Color) -> Color {
-        Color {
-            r: self.r + other.r,
-            g: self.g + other.g,
-            b: self.b + other.b,
-        }
-    }
-}
-
-struct Image {
-    height: usize,
-    width: usize,
-    pixels: Vec<Vec<Color>>,
-}
-
-impl Image {
-    fn new(w: usize, h: usize, initial_color: Color) -> Image {
-        Image {
-            pixels: (0..h).map(|_| (0..w).map(|_| initial_color.clone()).collect()).collect(),
-            width: w,
-            height: h,
-        }
-    }
-
-    fn set_pixel(&mut self, w: usize, h: usize, val: Color) {
-        self.pixels[h][w] = val;
-    }
-
-    fn write(&self, f: &mut File) {
-        let mut buf = BufWriter::new(f);
-
-        write!(buf, "P3\n{} {}\n255\n", self.width, self.height);
-        for row in &self.pixels {
-            for pixel in row {
-                write!(buf, "{} {} {}\n",
-                       (pixel.r * 255.99) as u8,
-                       (pixel.g * 255.99) as u8,
-                       (pixel.b * 255.99) as u8);
-            }
-        }
-    }
-}
-
-#[derive(Debug)]
-struct Ray {
-    origin: Vector3<f64>,
-    direction: Vector3<f64>,
-}
-
-impl Ray {
-    fn point_at_distance(&self, t: f64) -> Vector3<f64> {
-        self.origin + (self.direction * t)
-    }
-}
-
-struct ScatterResult {
-    ray: Ray,
-    attenuate: Color,
-}
-
-trait Material {
-    fn scatter(&self, r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult>;
-    fn emitted(&self) -> Color;
-}
-
-struct Lambertian {
-    albedo: Color,
-}
-
-impl Material for Lambertian {
-    fn emitted(&self) -> Color {
-        black()
-    }
-
-    fn scatter(&self, _r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult> {
-        let target = hit.point + hit.normal + sv;
-        Some(ScatterResult {
-            ray: Ray {
-                origin: hit.point,
-                direction: target - hit.point,
-            },
-            attenuate: self.albedo,
-        })
-    }
-}
-
-struct Emissive {
-    color: Color,
-}
-
-impl Material for Emissive {
-    fn emitted(&self) -> Color {
-        self.color
-    }
-
-    fn scatter(&self, _r: &Ray, _hit: &Hit, _sv: &Vector3<f64>) -> Option<ScatterResult> {
-        None
-    }
-}
-
-struct Metal {
-    albedo: Color,
-    gloss: f64,
-}
-
-impl Material for Metal {
-    fn emitted(&self) -> Color {
-        black()
-    }
-
-    fn scatter(&self, r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult> {
-        let reflected = reflect(&r.direction, &hit.normal);
-        let fuzz_vec = self.gloss * sv;
-        let dir = reflected + fuzz_vec;
-
-        Some(ScatterResult {
-            ray: Ray {
-                origin: hit.point,
-                direction: dir,
-            },
-            attenuate: self.albedo,
-        })
-    }
-}
-
-struct Sphere {
-    center: Vector3<f64>,
-    radius: f64,
-    material: Box<Material>,
-}
-
-trait Intersectable {
-    fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>>;
-}
-
-#[derive(Clone)]
-struct Hit<'a> {
-    distance: f64,
-    point: Vector3<f64>,
-    normal: Vector3<f64>,
-    material: &'a Material,
-}
-
-impl<'a> Hit<'a> {
-    fn compare(&self, other: &Hit) -> Ordering {
-        if self.distance.le(&other.distance) {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
-    }
-}
-
-impl Intersectable for Sphere {
-    fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>> {
-        let oc = r.origin - self.center;
-        let a = r.direction.dot(&r.direction);
-        let b = 2.0 * oc.dot(&r.direction);
-        let c = oc.dot(&oc) - self.radius * self.radius;
-        let discriminant = b * b - 4.0 * a * c;
-
-        if discriminant > 0.0 {
-            let t1 = (-b - discriminant.sqrt()) / (2.0 * a);
-
-            if t1 > T_MIN {
-                let p = r.point_at_distance(t1);
-                Some(Hit {
-                    point: p,
-                    distance: t1,
-                    normal: (p - self.center) / self.radius,
-                    material: self.material.as_ref(),
-                })
-            } else {
-                let t2 = (-b + (b * b - a * c).sqrt()) / a;
-                if t2 > T_MIN {
-                    let p = r.point_at_distance(t2);
-                    Some(Hit {
-                        point: p,
-                        distance: t2,
-                        normal: (p - self.center) / self.radius,
-                        material: self.material.as_ref(),
-                    })
-                } else {
-                    None
-                }
-            }
-        } else {
-            None
-        }
-    }
-}
-
-struct World {
-    objects: Vec<Box<Intersectable>>,
-    background: Color,
-    camera: Box<Camera>,
-    config: Config,
-}
-
-impl Intersectable for World {
-    fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>> {
-        let hits: Vec<Hit> = self.objects.iter()
-              .filter_map(|o| o.hit(r))
-              .collect();
-
-        hits.into_iter().min_by(Hit::compare)
-    }
-}
-
-impl World {
-    fn color(&self, r: &Ray, sn: usize, ss: &Vec<Vec<Vector3<f64>>>, depth: usize) -> Color {
-        match self.hit(r) {
-            None => self.background,
-            Some(h) => {
-                let emitted = h.material.emitted();
-                if depth < self.config.max_depth {
-                    if let Some(sr) = h.material.scatter(r, &h, &ss[depth][sn]) {
-                        emitted + self.color(&sr.ray, sn, &ss, depth + 1) * sr.attenuate
-                    } else {
-                        emitted
-                    }
-                } else {
-                    emitted
-                }
-            },
-        }
-    }
-}
-
-struct SimpleCamera {
-    lower_left: Vector3<f64>,
-    horizontal: Vector3<f64>,
-    vertical: Vector3<f64>,
-    origin: Vector3<f64>,
-}
-
-trait Camera {
-    fn get_ray(&self, u: f64, v: f64) -> Ray;
-}
-
-impl Camera for SimpleCamera {
-    fn get_ray(&self, u: f64, v: f64) -> Ray {
-        Ray {
-            origin: self.origin,
-            direction: self.lower_left + self.horizontal * u + self.vertical * v,
-        }
-    }
-}
-
-fn build_scene(config: &Config) -> World {
-    let s_right_front = Sphere {
+fn build_scene(config: &Config) -> scene::Scene {
+    let s_right_front = sphere::Sphere {
         center: Vector3::new(1.2, 0.0, -0.6),
         radius: 0.5,
-        material: Box::new(Metal {
+        material: Box::new(materials::Metal {
             albedo: Color::new(0.3, 0.3, 0.7),
             gloss: 0.3,
         }),
     };
-    // let s_middle_front_1 = Sphere {
-    //     center: Vector3::new(0.3, -0.25, -1.0),
-    //     radius: 0.25,
-    //     material: Box::new(Dielectric {
-    //         ri: 1.05,
-    //         reflect_gloss: 0.0,
-    //         refract_gloss: 0.0,
-    //         color: Color::new(0.2588, 0.702, 0.9567),
-    //     }),
-    // };
-    // let s_middle_front_2 = Sphere {
-    //     center: Vector3::new(-0.3, -0.25, -1.0),
-    //     radius: 0.25,
-    //     material: Box::new(Dielectric {
-    //         ri: 1.31,
-    //         reflect_gloss: 0.1,
-    //         refract_gloss: 0.03,
-    //         color: Color::new(0.2588, 0.702, 0.9567),
-    //     }),
-    // };
-    let s_left_front = Sphere {
+    let s_left_front = sphere::Sphere {
         center: Vector3::new(-1.2, 0.0, -0.6),
         radius: 0.5,
-        material: Box::new(Metal {
+        material: Box::new(materials::Metal {
             albedo: Color::new(0.9, 0.5, 0.5),
             gloss: 0.01,
         }),
     };
-    let s_right_back = Sphere {
+    let s_right_back = sphere::Sphere {
         center: Vector3::new(0.6, 0.0, -2.0),
         radius: 0.5,
-        material: Box::new(Metal {
+        material: Box::new(materials::Metal {
             albedo: Color::new(0.4, 0.6, 0.1),
             gloss: 2.0,
         }),
     };
-    let s_left_back = Sphere {
+    let s_left_back = sphere::Sphere {
         center: Vector3::new(-0.6, 0.0, -2.0),
         radius: 0.5,
-        material: Box::new(Metal {
+        material: Box::new(materials::Metal {
             albedo: Color::new(0.97, 0.56, 0.26),
             gloss: 0.01,
         }),
     };
-    let s_light1 = Sphere {
+    let s_light1 = sphere::Sphere {
         center: Vector3::new(10.0, 12.0, -2.0),
         radius: 5.0,
-        material: Box::new(Emissive {
+        material: Box::new(materials::Emissive {
             color: Color::all(1.0),
         }),
     };
-    let s_light2 = Sphere {
+    let s_light2 = sphere::Sphere {
         center: Vector3::new(-10.0, 12.0, -2.0),
         radius: 5.0,
-        material: Box::new(Emissive {
+        material: Box::new(materials::Emissive {
             color: Color::all(1.0),
         }),
     };
 
-    let s_ground = Sphere {
+    let s_ground = sphere::Sphere {
         center: Vector3::new(0.0, -10000.5, -1.0),
         radius: 10000.0,
-        material: Box::new(Lambertian {
+        material: Box::new(materials::Lambertian {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     };
 
-    let cam = SimpleCamera {
+    let cam = cameras::SimpleCamera {
         lower_left: Vector3::new(-2.0, -1.0, -4.0),
         horizontal: Vector3::new(4.0, 0.0, 0.0),
         vertical: Vector3::new(0.0, 2.0, 0.0),
         origin: Vector3::new(0.0, 0.0, 3.0),
     };
 
-    World {
+    scene::Scene {
         objects: vec![
             Box::new(s_left_front),
-            // Box::new(s_middle_front_1),
-            // Box::new(s_middle_front_2),
             Box::new(s_right_front),
             Box::new(s_left_back),
             Box::new(s_right_back),
@@ -449,78 +100,8 @@ fn build_scene(config: &Config) -> World {
     }
 }
 
-#[derive(Debug)]
-#[derive(Clone)]
-struct Config {
-    sample_root: usize,
-    quiet: bool,
-    max_depth: usize,
-    output_file: String,
-}
-
-static DEFAULT_OUTPUT_FILENAME: &'static str = "output.ppm";
-static DEFAULT_SAMPLE_ROOT: usize = 1;
-static DEFAULT_MAX_DEPTH: usize = 3;
-
-impl Config {
-    fn new() -> Config {
-        let ms = App::new("rebound")
-            .version("0.1")
-            .author("Jonathan Daugherty")
-            .arg(Arg::with_name("quiet")
-                 .short("q")
-                 .long("quiet")
-                 .help("Suppress all console output"))
-            .arg(Arg::with_name("sample-root")
-                 .short("r")
-                 .long("sample-root")
-                 .value_name("ROOT")
-                 .help("Sample root")
-                 .takes_value(true))
-            .arg(Arg::with_name("depth")
-                 .short("d")
-                 .long("depth")
-                 .value_name("DEPTH")
-                 .help("Maximum recursion depth")
-                 .takes_value(true))
-            .arg(Arg::with_name("output-file")
-                 .short("o")
-                 .long("output-file")
-                 .value_name("FILENAME")
-                 .help("Output filename path")
-                 .takes_value(true))
-            .get_matches();
-
-        return Config {
-            quiet: ms.occurrences_of("quiet") > 0,
-            sample_root: match ms.value_of("sample-root") {
-                Some(v) => { v.parse().unwrap() },
-                None => DEFAULT_SAMPLE_ROOT,
-            },
-            max_depth: match ms.value_of("depth") {
-                Some(v) => { v.parse().unwrap() },
-                None => DEFAULT_MAX_DEPTH,
-            },
-            output_file: match ms.occurrences_of("output-file") {
-                0 => String::from(DEFAULT_OUTPUT_FILENAME),
-                1 => String::from(ms.value_of("output-file").unwrap()),
-                _ => panic!("BUG: output file specified more than once"),
-            },
-        };
-    }
-
-    fn show(&self) {
-        println!("Renderer configuration:");
-        println!("  Sample root:    {} ({} pixel sample{})",
-           self.sample_root, self.sample_root * self.sample_root,
-           if self.sample_root == 1 { "" } else { "s" });
-        println!("  Maximum depth:  {}", self.max_depth);
-        println!("  Output path:    {}", self.output_file);
-    }
-}
-
 fn main() {
-    let config = Config::new();
+    let config = args::config_from_args();
 
     if !config.quiet {
         config.show();
