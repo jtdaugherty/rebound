@@ -174,11 +174,11 @@ impl Material for Lambertian {
     }
 
     fn scatter(&self, _r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult> {
-        let target = hit.p + hit.normal + sv;
+        let target = hit.point + hit.normal + sv;
         Some(ScatterResult {
             ray: Ray {
-                origin: hit.p,
-                direction: target - hit.p,
+                origin: hit.point,
+                direction: target - hit.point,
             },
             attenuate: self.albedo,
         })
@@ -216,7 +216,7 @@ impl Material for Metal {
 
         Some(ScatterResult {
             ray: Ray {
-                origin: hit.p,
+                origin: hit.point,
                 direction: dir,
             },
             attenuate: self.albedo,
@@ -236,15 +236,15 @@ trait Intersectable {
 
 #[derive(Clone)]
 struct Hit<'a> {
-    t: f64,
-    p: Vector3<f64>,
+    distance: f64,
+    point: Vector3<f64>,
     normal: Vector3<f64>,
     material: &'a Material,
 }
 
 impl<'a> Hit<'a> {
     fn compare(&self, other: &Hit) -> Ordering {
-        if self.t.le(&other.t) {
+        if self.distance.le(&other.distance) {
             Ordering::Less
         } else {
             Ordering::Greater
@@ -266,7 +266,9 @@ impl Intersectable for Sphere {
             if t1 > T_MIN {
                 let p = r.point_at_distance(t1);
                 Some(Hit {
-                    p, t: t1, normal: (p - self.center) / self.radius,
+                    point: p,
+                    distance: t1,
+                    normal: (p - self.center) / self.radius,
                     material: self.material.as_ref(),
                 })
             } else {
@@ -274,7 +276,9 @@ impl Intersectable for Sphere {
                 if t2 > T_MIN {
                     let p = r.point_at_distance(t2);
                     Some(Hit {
-                        p, t: t2, normal: (p - self.center) / self.radius,
+                        point: p,
+                        distance: t2,
+                        normal: (p - self.center) / self.radius,
                         material: self.material.as_ref(),
                     })
                 } else {
