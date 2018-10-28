@@ -160,7 +160,7 @@ struct ScatterResult {
 }
 
 trait Material {
-    fn scatter(&self, r: &Ray, hit: &Hit, sn: usize, ss: &Vec<Vector3<f64>>) -> Option<ScatterResult>;
+    fn scatter(&self, r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult>;
     fn emitted(&self) -> Color;
 }
 
@@ -173,8 +173,8 @@ impl Material for Lambertian {
         black()
     }
 
-    fn scatter(&self, _r: &Ray, hit: &Hit, sn: usize, ss: &Vec<Vector3<f64>>) -> Option<ScatterResult> {
-        let target = hit.p + hit.normal + ss[sn];
+    fn scatter(&self, _r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult> {
+        let target = hit.p + hit.normal + sv;
         Some(ScatterResult {
             ray: Ray {
                 origin: hit.p,
@@ -243,7 +243,7 @@ impl Material for Emissive {
         self.color
     }
 
-    fn scatter(&self, _r: &Ray, _hit: &Hit, _sn: usize, _ss: &Vec<Vector3<f64>>) -> Option<ScatterResult> {
+    fn scatter(&self, _r: &Ray, _hit: &Hit, _sv: &Vector3<f64>) -> Option<ScatterResult> {
         None
     }
 }
@@ -258,9 +258,9 @@ impl Material for Metal {
         black()
     }
 
-    fn scatter(&self, r: &Ray, hit: &Hit, sn: usize, ss: &Vec<Vector3<f64>>) -> Option<ScatterResult> {
+    fn scatter(&self, r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult> {
         let reflected = reflect(&r.direction, &hit.normal);
-        let fuzz_vec = self.gloss * ss[sn];
+        let fuzz_vec = self.gloss * sv;
         let dir = reflected + fuzz_vec;
 
         if dir.dot(&hit.normal) > 0.0 {
@@ -364,7 +364,7 @@ impl World {
             Some(h) => {
                 let emitted = h.material.emitted();
                 if depth < self.config.max_depth {
-                    if let Some(sr) = h.material.scatter(r, &h, sn, &ss[depth]) {
+                    if let Some(sr) = h.material.scatter(r, &h, &ss[depth][sn]) {
                         emitted + self.color(&sr.ray, sn, &ss, depth + 1) * sr.attenuate
                     } else {
                         emitted
