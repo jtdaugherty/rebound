@@ -185,55 +185,6 @@ impl Material for Lambertian {
     }
 }
 
-// fn schlick(cosine: f64, ref_idx: f64) -> f64 {
-//     let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
-//     let r1 = r0 * r0;
-//     r1 + (1.0 - r1) * (1.0 - cosine).powf(5.0)
-// }
-
-// struct Dielectric {
-//     ri: f64,
-//     reflect_gloss: f64,
-//     refract_gloss: f64,
-//     color: Color,
-// }
-
-// impl Material for Dielectric {
-//     fn emitted(&self) -> Color {
-//         black()
-//     }
-// 
-//     fn scatter(&self, r: &Ray, hit: &Hit, sn: usize, ss: &Vector3<f64>) -> Option<ScatterResult> {
-//         let refl = reflect(&r.direction, &hit.normal);
-// 
-//         let (outward_normal, ni_nt, cosine) = if r.direction.dot(&hit.normal) > 0.0 {
-//             (-1.0 * hit.normal, self.ri,
-//              self.ri * r.direction.dot(&hit.normal) / r.direction.norm())
-//         } else {
-//             (hit.normal, 1.0 / self.ri,
-//              -1.0 * r.direction.dot(&hit.normal) / r.direction.norm())
-//         };
-// 
-//         let (gloss, ray_dir) = match refract(&r.direction, &outward_normal, ni_nt) {
-//             Some(refracted) => {
-//                 let prob = schlick(cosine, self.ri);
-//                 if s.next_f64() < prob {
-//                     (self.reflect_gloss, refl)
-//                 } else {
-//                     (self.refract_gloss, refracted)
-//                 }
-//             },
-//             None => (self.reflect_gloss, refl),
-//         };
-// 
-//         let fuzz_vec = gloss * ss[sn];
-//         Some(ScatterResult {
-//             ray: Ray { origin: hit.p, direction: ray_dir + fuzz_vec },
-//             attenuate: self.color,
-//         })
-//     }
-// }
-
 struct Emissive {
     color: Color,
 }
