@@ -592,7 +592,7 @@ fn main() {
             (0..config.max_depth).map(|_|
                 samplers::to_hemisphere(
                     samplers::u_grid_jittered(&mut sampler, config.sample_root),
-                    1.0)
+                    0.0)
                 ).collect()
             ).collect();
 
