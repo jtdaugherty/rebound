@@ -1,7 +1,7 @@
 extern crate samplers;
-
 extern crate nalgebra;
 extern crate clap;
+extern crate rand;
 
 use nalgebra::{Vector3};
 use std::cmp::Ordering;
@@ -17,6 +17,8 @@ use std::ops::AddAssign;
 use std::ops::Mul;
 use std::ops::Add;
 
+use rand::Rng;
+
 const T_MIN: f64 = 0.0005;
 
 #[derive(Clone)]
@@ -31,16 +33,16 @@ fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     v - 2.0 * v.dot(&n) * n
 }
 
-fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_nt: f64) -> Option<Vector3<f64>> {
-    let uv = v.normalize();
-    let dt = uv.dot(n);
-    let desc = 1.0 - ni_nt * ni_nt * (1.0 - dt * dt);
-    if desc > 0.0 {
-        Some(ni_nt * (uv - n * dt) - n * desc.sqrt())
-    } else {
-        None
-    }
-}
+// fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_nt: f64) -> Option<Vector3<f64>> {
+//     let uv = v.normalize();
+//     let dt = uv.dot(n);
+//     let desc = 1.0 - ni_nt * ni_nt * (1.0 - dt * dt);
+//     if desc > 0.0 {
+//         Some(ni_nt * (uv - n * dt) - n * desc.sqrt())
+//     } else {
+//         None
+//     }
+// }
 
 impl DivAssign<f64> for Color {
     fn div_assign(&mut self, d: f64) {
@@ -158,7 +160,7 @@ struct ScatterResult {
 }
 
 trait Material {
-    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult>;
+    fn scatter(&self, r: &Ray, hit: &Hit, sn: usize, ss: &Vec<Vector3<f64>>) -> Option<ScatterResult>;
     fn emitted(&self) -> Color;
 }
 
@@ -171,8 +173,8 @@ impl Material for Lambertian {
         black()
     }
 
-    fn scatter(&self, _r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult> {
-        let target = hit.p + hit.normal + samplers::u_sphere_random(s);
+    fn scatter(&self, _r: &Ray, hit: &Hit, sn: usize, ss: &Vec<Vector3<f64>>) -> Option<ScatterResult> {
+        let target = hit.p + hit.normal + ss[sn];
         Some(ScatterResult {
             ray: Ray {
                 origin: hit.p,
@@ -183,54 +185,54 @@ impl Material for Lambertian {
     }
 }
 
-fn schlick(cosine: f64, ref_idx: f64) -> f64 {
-    let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
-    let r1 = r0 * r0;
-    r1 + (1.0 - r1) * (1.0 - cosine).powf(5.0)
-}
+// fn schlick(cosine: f64, ref_idx: f64) -> f64 {
+//     let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+//     let r1 = r0 * r0;
+//     r1 + (1.0 - r1) * (1.0 - cosine).powf(5.0)
+// }
 
-struct Dielectric {
-    ri: f64,
-    reflect_gloss: f64,
-    refract_gloss: f64,
-    color: Color,
-}
+// struct Dielectric {
+//     ri: f64,
+//     reflect_gloss: f64,
+//     refract_gloss: f64,
+//     color: Color,
+// }
 
-impl Material for Dielectric {
-    fn emitted(&self) -> Color {
-        black()
-    }
-
-    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult> {
-        let refl = reflect(&r.direction, &hit.normal);
-
-        let (outward_normal, ni_nt, cosine) = if r.direction.dot(&hit.normal) > 0.0 {
-            (-1.0 * hit.normal, self.ri,
-             self.ri * r.direction.dot(&hit.normal) / r.direction.norm())
-        } else {
-            (hit.normal, 1.0 / self.ri,
-             -1.0 * r.direction.dot(&hit.normal) / r.direction.norm())
-        };
-
-        let (gloss, ray_dir) = match refract(&r.direction, &outward_normal, ni_nt) {
-            Some(refracted) => {
-                let prob = schlick(cosine, self.ri);
-                if s.next_f64() < prob {
-                    (self.reflect_gloss, refl)
-                } else {
-                    (self.refract_gloss, refracted)
-                }
-            },
-            None => (self.reflect_gloss, refl),
-        };
-
-        let fuzz_vec = gloss * samplers::u_sphere_random(s);
-        Some(ScatterResult {
-            ray: Ray { origin: hit.p, direction: ray_dir + fuzz_vec },
-            attenuate: self.color,
-        })
-    }
-}
+// impl Material for Dielectric {
+//     fn emitted(&self) -> Color {
+//         black()
+//     }
+// 
+//     fn scatter(&self, r: &Ray, hit: &Hit, sn: usize, ss: &Vector3<f64>) -> Option<ScatterResult> {
+//         let refl = reflect(&r.direction, &hit.normal);
+// 
+//         let (outward_normal, ni_nt, cosine) = if r.direction.dot(&hit.normal) > 0.0 {
+//             (-1.0 * hit.normal, self.ri,
+//              self.ri * r.direction.dot(&hit.normal) / r.direction.norm())
+//         } else {
+//             (hit.normal, 1.0 / self.ri,
+//              -1.0 * r.direction.dot(&hit.normal) / r.direction.norm())
+//         };
+// 
+//         let (gloss, ray_dir) = match refract(&r.direction, &outward_normal, ni_nt) {
+//             Some(refracted) => {
+//                 let prob = schlick(cosine, self.ri);
+//                 if s.next_f64() < prob {
+//                     (self.reflect_gloss, refl)
+//                 } else {
+//                     (self.refract_gloss, refracted)
+//                 }
+//             },
+//             None => (self.reflect_gloss, refl),
+//         };
+// 
+//         let fuzz_vec = gloss * ss[sn];
+//         Some(ScatterResult {
+//             ray: Ray { origin: hit.p, direction: ray_dir + fuzz_vec },
+//             attenuate: self.color,
+//         })
+//     }
+// }
 
 struct Emissive {
     color: Color,
@@ -241,7 +243,7 @@ impl Material for Emissive {
         self.color
     }
 
-    fn scatter(&self, _r: &Ray, _hit: &Hit, _s: &mut samplers::SampleSource) -> Option<ScatterResult> {
+    fn scatter(&self, _r: &Ray, _hit: &Hit, _sn: usize, _ss: &Vec<Vector3<f64>>) -> Option<ScatterResult> {
         None
     }
 }
@@ -256,9 +258,9 @@ impl Material for Metal {
         black()
     }
 
-    fn scatter(&self, r: &Ray, hit: &Hit, s: &mut samplers::SampleSource) -> Option<ScatterResult> {
+    fn scatter(&self, r: &Ray, hit: &Hit, sn: usize, ss: &Vec<Vector3<f64>>) -> Option<ScatterResult> {
         let reflected = reflect(&r.direction, &hit.normal);
-        let fuzz_vec = self.gloss * samplers::u_sphere_random(s);
+        let fuzz_vec = self.gloss * ss[sn];
         let dir = reflected + fuzz_vec;
 
         if dir.dot(&hit.normal) > 0.0 {
@@ -282,7 +284,7 @@ struct Sphere {
 }
 
 trait Intersectable {
-    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::SampleSource) -> Option<Hit<'a>>;
+    fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>>;
 }
 
 #[derive(Clone)]
@@ -304,7 +306,7 @@ impl<'a> Hit<'a> {
 }
 
 impl Intersectable for Sphere {
-    fn hit<'a>(&'a self, r: &Ray, _: &mut samplers::SampleSource) -> Option<Hit<'a>> {
+    fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>> {
         let oc = r.origin - self.center;
         let a = r.direction.dot(&r.direction);
         let b = 2.0 * oc.dot(&r.direction);
@@ -346,9 +348,9 @@ struct World {
 }
 
 impl Intersectable for World {
-    fn hit<'a>(&'a self, r: &Ray, s: &mut samplers::SampleSource) -> Option<Hit<'a>> {
+    fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>> {
         let hits: Vec<Hit> = self.objects.iter()
-              .filter_map(|o| o.hit(r, s))
+              .filter_map(|o| o.hit(r))
               .collect();
 
         hits.into_iter().min_by(Hit::compare)
@@ -356,14 +358,14 @@ impl Intersectable for World {
 }
 
 impl World {
-    fn color(&self, r: &Ray, s: &mut samplers::SampleSource, depth: usize) -> Color {
-        match self.hit(r, s) {
+    fn color(&self, r: &Ray, sn: usize, ss: &Vec<Vec<Vector3<f64>>>, depth: usize) -> Color {
+        match self.hit(r) {
             None => self.background,
             Some(h) => {
                 let emitted = h.material.emitted();
                 if depth < self.config.max_depth {
-                    if let Some(sr) = h.material.scatter(r, &h, s) {
-                        emitted + self.color(&sr.ray, s, depth + 1) * sr.attenuate
+                    if let Some(sr) = h.material.scatter(r, &h, sn, &ss[depth]) {
+                        emitted + self.color(&sr.ray, sn, &ss, depth + 1) * sr.attenuate
                     } else {
                         emitted
                     }
@@ -404,26 +406,26 @@ fn build_scene(config: &Config) -> World {
             gloss: 0.3,
         }),
     };
-    let s_middle_front_1 = Sphere {
-        center: Vector3::new(0.3, -0.25, -1.0),
-        radius: 0.25,
-        material: Box::new(Dielectric {
-            ri: 1.05,
-            reflect_gloss: 0.0,
-            refract_gloss: 0.0,
-            color: Color::new(0.2588, 0.702, 0.9567),
-        }),
-    };
-    let s_middle_front_2 = Sphere {
-        center: Vector3::new(-0.3, -0.25, -1.0),
-        radius: 0.25,
-        material: Box::new(Dielectric {
-            ri: 1.31,
-            reflect_gloss: 0.1,
-            refract_gloss: 0.03,
-            color: Color::new(0.2588, 0.702, 0.9567),
-        }),
-    };
+    // let s_middle_front_1 = Sphere {
+    //     center: Vector3::new(0.3, -0.25, -1.0),
+    //     radius: 0.25,
+    //     material: Box::new(Dielectric {
+    //         ri: 1.05,
+    //         reflect_gloss: 0.0,
+    //         refract_gloss: 0.0,
+    //         color: Color::new(0.2588, 0.702, 0.9567),
+    //     }),
+    // };
+    // let s_middle_front_2 = Sphere {
+    //     center: Vector3::new(-0.3, -0.25, -1.0),
+    //     radius: 0.25,
+    //     material: Box::new(Dielectric {
+    //         ri: 1.31,
+    //         reflect_gloss: 0.1,
+    //         refract_gloss: 0.03,
+    //         color: Color::new(0.2588, 0.702, 0.9567),
+    //     }),
+    // };
     let s_left_front = Sphere {
         center: Vector3::new(-1.2, 0.0, -0.6),
         radius: 0.5,
@@ -481,8 +483,8 @@ fn build_scene(config: &Config) -> World {
     World {
         objects: vec![
             Box::new(s_left_front),
-            Box::new(s_middle_front_1),
-            Box::new(s_middle_front_2),
+            // Box::new(s_middle_front_1),
+            // Box::new(s_middle_front_2),
             Box::new(s_right_front),
             Box::new(s_left_back),
             Box::new(s_right_back),
@@ -578,11 +580,21 @@ fn main() {
     let w = build_scene(&config);
     let mut img = Image::new(800, 400, black());
     let mut sampler = samplers::new();
+
     let pixel_samples = if config.sample_root == 1 {
         samplers::u_grid_regular(config.sample_root)
     } else {
         samplers::u_grid_jittered(&mut sampler, config.sample_root)
     };
+
+    let hemi_sample_sets: Vec<Vec<Vec<Vector3<f64>>>> =
+        (0..img.width).map(|_|
+            (0..config.max_depth).map(|_|
+                samplers::to_hemisphere(
+                    samplers::u_grid_jittered(&mut sampler, config.sample_root),
+                    1.0)
+                ).collect()
+            ).collect();
 
     if !config.quiet {
         println!("Rendering...");
@@ -591,17 +603,20 @@ fn main() {
     let total_pixels = (img.height * img.width) as f64;
     let img_h = img.height as f64;
     let img_w = img.width as f64;
+    let mut sample_set_indexes: Vec<usize> = (0..img.width).collect();
 
     for row in 0..img.height {
+        sampler.rng.shuffle(&mut sample_set_indexes);
+
         for col in 0..img.width {
             let mut color = black();
 
-            for point in &pixel_samples {
+            for (index, point) in pixel_samples.iter().enumerate() {
                 let u = (col as f64 + point.x) / img_w;
                 let v = ((img.height - 1 - row) as f64 + point.y) / img_h;
                 let r = w.camera.get_ray(u, v);
 
-                color += w.color(&r, &mut sampler, 0);
+                color += w.color(&r, index, &hemi_sample_sets[sample_set_indexes[col]], 0);
             }
 
             color /= pixel_samples.len() as f64;

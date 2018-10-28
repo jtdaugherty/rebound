@@ -1,6 +1,6 @@
 
 extern crate nalgebra;
-use nalgebra::{Vector3};
+use nalgebra::{Vector3, normalize};
 
 extern crate rand;
 use rand::IsaacRng;
@@ -18,7 +18,7 @@ pub struct Point2d {
 }
 
 pub struct SampleSource {
-    rng: IsaacRng,
+    pub rng: IsaacRng,
 }
 
 impl SampleSource {
@@ -56,17 +56,17 @@ pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<Point2d> {
 }
 
 // Assumes input samples are all in [0..1]
-pub fn to_hemisphere(points: Vec<Point2d>) -> Vec<Vector3<f64>> {
+pub fn to_hemisphere(points: Vec<Point2d>, e: f64) -> Vec<Vector3<f64>> {
     points.iter().map(
         |p| {
             let cos_phi = (2.0 * std::f64::consts::PI * p.x).cos();
             let sin_phi = (2.0 * std::f64::consts::PI * p.x).sin();
-            let cos_theta = Pow::pow(1.0 - p.y, 1.0 / (std::f64::consts::E + 1.0));
+            let cos_theta = Pow::pow(1.0 - p.y, 1.0 / (e + 1.0));
             let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
             let pu = sin_theta * cos_phi;
             let pv = sin_theta * sin_phi;
             let pw = cos_theta;
-            Vector3::new(pu, pv, pw)
+            normalize(&Vector3::new(pu, pv, pw))
         }).collect()
 }
 
@@ -109,19 +109,4 @@ pub fn to_poisson_disc(points: Vec<Point2d>) -> Vec<Point2d> {
             }
         }
         ).collect()
-}
-
-pub fn u_sphere_random(s: &mut SampleSource) -> Vector3<f64> {
-    let mut v = Vector3::new(5.0, 0.0, 0.0);
-
-    while v.dot(&v) >= 1.0 {
-        let xr: f64 = s.rng.gen();
-        let yr: f64 = s.rng.gen();
-        let zr: f64 = s.rng.gen();
-        v.x = 2.0 * xr - 1.0;
-        v.y = 2.0 * yr - 1.0;
-        v.z = 2.0 * zr - 1.0;
-    };
-
-    v
 }
