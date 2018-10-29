@@ -1,13 +1,8 @@
 
 use std::fs::File;
-use std::io::Write;
-use std::io::stdout;
 
 extern crate nalgebra;
 use nalgebra::{Vector3};
-
-extern crate rand;
-use rand::Rng;
 
 extern crate samplers;
 mod types;
@@ -109,63 +104,14 @@ fn main() {
 
     let mut output_file = File::create(config.output_file.clone()).unwrap();
 
-    let w = build_scene(&config);
+    let s = build_scene(&config);
     let mut img = Image::new(800, 400, black());
-    let mut sampler = samplers::new();
-
-    let pixel_samples = if config.sample_root == 1 {
-        samplers::u_grid_regular(config.sample_root)
-    } else {
-        samplers::u_grid_jittered(&mut sampler, config.sample_root)
-    };
-
-    let hemi_sample_sets: Vec<Vec<Vec<Vector3<f64>>>> =
-        (0..img.width).map(|_|
-            (0..config.max_depth).map(|_|
-                samplers::to_hemisphere(
-                    samplers::u_grid_jittered(&mut sampler, config.sample_root),
-                    0.0)
-                ).collect()
-            ).collect();
 
     if !config.quiet {
         println!("Rendering...");
     }
 
-    let total_pixels = (img.height * img.width) as f64;
-    let img_h = img.height as f64;
-    let img_w = img.width as f64;
-    let mut sample_set_indexes: Vec<usize> = (0..img.width).collect();
-
-    for row in 0..img.height {
-        sampler.rng.shuffle(&mut sample_set_indexes);
-
-        for col in 0..img.width {
-            let mut color = black();
-
-            for (index, point) in pixel_samples.iter().enumerate() {
-                let u = (col as f64 + point.x) / img_w;
-                let v = ((img.height - 1 - row) as f64 + point.y) / img_h;
-                let r = w.camera.get_ray(u, v);
-
-                color += w.color(&r, index, &hemi_sample_sets[sample_set_indexes[col]], 0);
-            }
-
-            color /= pixel_samples.len() as f64;
-
-            color.r = color.r.sqrt();
-            color.g = color.g.sqrt();
-            color.b = color.b.sqrt();
-
-            img.set_pixel(col, row, color);
-        }
-
-        let progress = 100.0 * (((row + 1) * img.width) as f64) / total_pixels;
-        print!("  {} %\r", progress as u32);
-        stdout().flush().unwrap();
-    }
-
-    println!("");
+    s.render(&config, &mut img);
 
     if !config.quiet {
         println!("Writing output file.");
