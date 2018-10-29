@@ -115,7 +115,7 @@ fn main() {
         println!("Rendering...");
     }
 
-    s.render(&config, &mut img);
+    s.render(&mut img);
 
     if !config.quiet {
         println!("Writing output file.");

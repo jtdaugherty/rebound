@@ -47,20 +47,20 @@ impl Scene {
         }
     }
 
-    pub fn render(&self, config: &Config, img: &mut Image) {
+    pub fn render(&self, img: &mut Image) {
         let mut sampler = samplers::new();
 
-        let pixel_samples = if config.sample_root == 1 {
-            samplers::u_grid_regular(config.sample_root)
+        let pixel_samples = if self.config.sample_root == 1 {
+            samplers::u_grid_regular(self.config.sample_root)
         } else {
-            samplers::u_grid_jittered(&mut sampler, config.sample_root)
+            samplers::u_grid_jittered(&mut sampler, self.config.sample_root)
         };
 
         let hemi_sample_sets: Vec<Vec<Vec<Vector3<f64>>>> =
             (0..img.width).map(|_|
-                (0..config.max_depth).map(|_|
+                (0..self.config.max_depth).map(|_|
                     samplers::to_hemisphere(
-                        samplers::u_grid_jittered(&mut sampler, config.sample_root),
+                        samplers::u_grid_jittered(&mut sampler, self.config.sample_root),
                         0.0)
                     ).collect()
                 ).collect();
