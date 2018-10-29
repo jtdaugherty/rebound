@@ -93,7 +93,7 @@ fn build_scene(config: &Config) -> scene::Scene {
             Box::new(s_light1),
             Box::new(s_light2),
         ],
-        background: Color::all(0.1),
+        background: Color::all(0.5),
         camera: Box::new(cam),
         config: config.clone(),
     }
