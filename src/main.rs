@@ -8,19 +8,23 @@ extern crate samplers;
 mod types;
 mod materials;
 mod cameras;
-mod sphere;
+mod shapes;
 mod constants;
 mod util;
 mod scene;
 mod args;
 
 use types::*;
+use shapes::sphere;
+use materials::metal;
+use materials::lambertian;
+use materials::emissive;
 
 fn build_scene(config: &Config) -> scene::Scene {
     let s_right_front = sphere::Sphere {
         center: Vector3::new(1.2, 0.0, -0.6),
         radius: 0.5,
-        material: Box::new(materials::Metal {
+        material: Box::new(metal::Metal {
             albedo: Color::new(0.3, 0.3, 0.7),
             gloss: 0.3,
         }),
@@ -28,7 +32,7 @@ fn build_scene(config: &Config) -> scene::Scene {
     let s_left_front = sphere::Sphere {
         center: Vector3::new(-1.2, 0.0, -0.6),
         radius: 0.5,
-        material: Box::new(materials::Metal {
+        material: Box::new(metal::Metal {
             albedo: Color::new(0.9, 0.5, 0.5),
             gloss: 0.01,
         }),
@@ -36,7 +40,7 @@ fn build_scene(config: &Config) -> scene::Scene {
     let s_right_back = sphere::Sphere {
         center: Vector3::new(0.6, 0.0, -2.0),
         radius: 0.5,
-        material: Box::new(materials::Metal {
+        material: Box::new(metal::Metal {
             albedo: Color::new(0.4, 0.6, 0.1),
             gloss: 2.0,
         }),
@@ -44,7 +48,7 @@ fn build_scene(config: &Config) -> scene::Scene {
     let s_left_back = sphere::Sphere {
         center: Vector3::new(-0.6, 0.0, -2.0),
         radius: 0.5,
-        material: Box::new(materials::Metal {
+        material: Box::new(metal::Metal {
             albedo: Color::new(0.97, 0.56, 0.26),
             gloss: 0.01,
         }),
@@ -52,14 +56,14 @@ fn build_scene(config: &Config) -> scene::Scene {
     let s_light1 = sphere::Sphere {
         center: Vector3::new(10.0, 12.0, -2.0),
         radius: 5.0,
-        material: Box::new(materials::Emissive {
+        material: Box::new(emissive::Emissive {
             color: Color::all(1.0),
         }),
     };
     let s_light2 = sphere::Sphere {
         center: Vector3::new(-10.0, 12.0, -2.0),
         radius: 5.0,
-        material: Box::new(materials::Emissive {
+        material: Box::new(emissive::Emissive {
             color: Color::all(1.0),
         }),
     };
@@ -67,7 +71,7 @@ fn build_scene(config: &Config) -> scene::Scene {
     let s_ground = sphere::Sphere {
         center: Vector3::new(0.0, -10000.5, -1.0),
         radius: 10000.0,
-        material: Box::new(materials::Lambertian {
+        material: Box::new(lambertian::Lambertian {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     };
