@@ -20,8 +20,6 @@ how we can adapt it)
 than spherical sampling with rejection, compare results at high sample
 counts
 
-* Command-line arguments (control over sampling, etc.)
-
 * BVH/bounding boxes etc
 
 * Emissive material, environment lighting
