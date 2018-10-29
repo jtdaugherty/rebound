@@ -24,6 +24,12 @@ counts
 
 * Emissive material, environment lighting
 
+* Reorganize source tree to move most things to a central library crate,
+then make the current main program use that crate and add new binaries
+like sampling helper tools and eventually a network rendering helper
+
+* Scene disk file format?
+
 Long-term
 =========
 
