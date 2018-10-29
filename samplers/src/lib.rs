@@ -21,12 +21,6 @@ pub struct SampleSource {
     pub rng: IsaacRng,
 }
 
-impl SampleSource {
-    pub fn next_f64(&mut self) -> f64 {
-        self.rng.gen()
-    }
-}
-
 pub fn new() -> SampleSource {
     let mut trng = rand::thread_rng();
 
