@@ -30,6 +30,8 @@ like sampling helper tools and eventually a network rendering helper
 
 * Scene disk file format?
 
+* Write some rustdocs
+
 Long-term
 =========
 
