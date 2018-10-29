@@ -106,21 +106,20 @@ fn main() {
         config.show();
     }
 
-    let mut output_file = File::create(config.output_file.clone()).unwrap();
-
     let s = build_scene(&config);
-    let mut img = Image::new(800, 400, black());
 
     if !config.quiet {
         println!("Rendering...");
     }
 
+    let mut img = Image::new(800, 400, black());
     s.render(&mut img);
 
     if !config.quiet {
         println!("Writing output file.");
     }
 
+    let mut output_file = File::create(config.output_file.clone()).unwrap();
     img.write(&mut output_file);
 
     if !config.quiet {
