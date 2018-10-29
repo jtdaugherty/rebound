@@ -20,11 +20,9 @@ pub struct Scene {
 
 impl Intersectable for Scene {
     fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>> {
-        let hits: Vec<Hit> = self.objects.iter()
-              .filter_map(|o| o.hit(r))
-              .collect();
-
-        hits.into_iter().min_by(Hit::compare)
+        self.objects.iter()
+            .filter_map(|o| o.hit(r))
+            .min_by(Hit::compare)
     }
 }
 
