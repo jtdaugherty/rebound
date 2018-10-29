@@ -119,6 +119,17 @@ impl Color {
     pub fn all(v: f64) -> Color {
        Color::new(v, v, v)
     }
+
+    pub fn max_to_one(&mut self) -> () {
+        let mx1 = if self.r > self.g { self.r } else { self.g };
+        let mx2 = if mx1 > self.b { mx1 } else { self.b };
+        if mx2 > 1.0 {
+            let i = 1.0 / mx2;
+            self.r *= i;
+            self.g *= i;
+            self.b *= i;
+        }
+    }
 }
 
 pub fn black() -> Color { Color::all(0.0) }

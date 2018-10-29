@@ -83,10 +83,7 @@ impl Scene {
                 }
 
                 color /= pixel_samples.len() as f64;
-
-                color.r = color.r.sqrt();
-                color.g = color.g.sqrt();
-                color.b = color.b.sqrt();
+                color.max_to_one();
 
                 img.set_pixel(col, row, color);
             }
