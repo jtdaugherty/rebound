@@ -67,6 +67,7 @@ impl Scene {
         let img_h = img.height as f64;
         let img_w = img.width as f64;
         let mut sample_set_indexes: Vec<usize> = (0..img.width).collect();
+        let pixel_denom = 1.0 / (pixel_samples.len() as f64);
 
         for row in 0..img.height {
             sampler.rng.shuffle(&mut sample_set_indexes);
@@ -82,7 +83,7 @@ impl Scene {
                     color += self.color(&r, index, &hemi_sample_sets[sample_set_indexes[col]], 0);
                 }
 
-                color /= pixel_samples.len() as f64;
+                color *= pixel_denom;
                 color.max_to_one();
 
                 img.set_pixel(col, row, color);

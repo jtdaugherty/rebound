@@ -8,6 +8,7 @@ use std::io::BufWriter;
 use std::io::Write;
 use std::ops::AddAssign;
 use std::ops::DivAssign;
+use std::ops::MulAssign;
 use std::ops::Mul;
 use std::ops::Add;
 use std::cmp::Ordering;
@@ -100,6 +101,14 @@ impl DivAssign<f64> for Color {
         self.r /= d;
         self.g /= d;
         self.b /= d;
+    }
+}
+
+impl MulAssign<f64> for Color {
+    fn mul_assign(&mut self, d: f64) {
+        self.r *= d;
+        self.g *= d;
+        self.b *= d;
     }
 }
 
