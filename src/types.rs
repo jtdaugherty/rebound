@@ -84,13 +84,13 @@ impl Image {
     pub fn write(&self, f: &mut File) {
         let mut buf = BufWriter::new(f);
 
-        write!(buf, "P3\n{} {}\n255\n", self.width, self.height);
+        write!(buf, "P3\n{} {}\n65535\n", self.width, self.height);
         for row in &self.pixels {
             for pixel in row {
                 write!(buf, "{} {} {}\n",
-                       (pixel.r * 255.99) as u8,
-                       (pixel.g * 255.99) as u8,
-                       (pixel.b * 255.99) as u8);
+                       (pixel.r * 65535.99) as u16,
+                       (pixel.g * 65535.99) as u16,
+                       (pixel.b * 65535.99) as u16);
             }
         }
     }
