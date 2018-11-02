@@ -28,11 +28,13 @@ impl Camera for PinholeCamera {
         let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres, black());
         let mut sampler = samplers::new();
 
-        let pixel_samples = if scene.config.sample_root == 1 {
-            samplers::u_grid_regular(scene.config.sample_root)
-        } else {
-            samplers::u_grid_jittered(&mut sampler, scene.config.sample_root)
-        };
+        let pixel_sample_sets: Vec<Vec<samplers::Point2d>> =
+            if scene.config.sample_root == 1 {
+                vec!(samplers::u_grid_regular(scene.config.sample_root))
+            } else {
+                (0..img.width).map(|_|
+                    samplers::u_grid_jittered(&mut sampler, scene.config.sample_root)).collect()
+            };
 
         let hemi_sample_sets: Vec<Vec<Vec<Vector3<f64>>>> =
             (0..img.width).map(|_|
@@ -47,7 +49,7 @@ impl Camera for PinholeCamera {
         let half_img_h = img.height as f64 * 0.5;
         let half_img_w = img.width as f64 * 0.5;
         let mut sample_set_indexes: Vec<usize> = (0..img.width).collect();
-        let pixel_denom = 1.0 / (pixel_samples.len() as f64);
+        let pixel_denom = 1.0 / ((scene.config.sample_root * scene.config.sample_root) as f64);
         let adjusted_pixel_size = scene.view_plane.pixel_size / self.zoom_factor;
 
         for row in 0..img.height {
@@ -55,6 +57,7 @@ impl Camera for PinholeCamera {
 
             for col in 0..img.width {
                 let mut color = black();
+                let pixel_samples = &pixel_sample_sets[sample_set_indexes[col] % pixel_sample_sets.len()];
 
                 for (index, point) in pixel_samples.iter().enumerate() {
                     let u = adjusted_pixel_size * (col as f64 - half_img_w + point.x);
