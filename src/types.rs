@@ -50,6 +50,12 @@ pub struct Ray {
     pub direction: Vector3<f64>,
 }
 
+pub struct ViewPlane {
+    pub hres: usize,
+    pub vres: usize,
+    pub pixel_size: f64,
+}
+
 pub struct ScatterResult {
     pub ray: Ray,
     pub attenuate: Color,
@@ -64,8 +70,44 @@ pub trait Intersectable {
     fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>>;
 }
 
+pub struct Scene {
+    pub objects: Vec<Box<Intersectable>>,
+    pub background: Color,
+    pub camera: Box<Camera>,
+    pub config: Config,
+    pub view_plane: ViewPlane,
+}
+
+pub struct CameraCore {
+    pub eye: Vector3<f64>,
+    pub look_at: Vector3<f64>,
+    pub up: Vector3<f64>,
+    pub u: Vector3<f64>,
+    pub v: Vector3<f64>,
+    pub w: Vector3<f64>,
+}
+
+impl CameraCore {
+    pub fn new(eye: Vector3<f64>, look_at: Vector3<f64>, up: Vector3<f64>) -> CameraCore {
+        let mut core = CameraCore {
+            eye, look_at, up,
+            u: Vector3::new(0.0, 0.0, 0.0),
+            v: Vector3::new(0.0, 0.0, 0.0),
+            w: Vector3::new(0.0, 0.0, 0.0),
+        };
+        core.compute_uvw();
+        core
+    }
+
+    pub fn compute_uvw(&mut self) {
+        self.w = (self.eye - self.look_at).normalize();
+        self.u = self.up.cross(&self.w).normalize();
+        self.v = self.w.cross(&self.u);
+    }
+}
+
 pub trait Camera {
-    fn get_ray(&self, u: f64, v: f64) -> Ray;
+    fn render(&self, scene: &Scene) -> Image;
 }
 
 impl Image {

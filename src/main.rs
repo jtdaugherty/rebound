@@ -21,7 +21,7 @@ use materials::metal;
 use materials::lambertian;
 use materials::emissive;
 
-fn build_scene(config: &Config) -> scene::Scene {
+fn build_scene(config: &Config) -> Scene {
     let s_right_front = sphere::Sphere {
         center: Vector3::new(1.2, 0.0, -0.6),
         radius: 0.5,
@@ -77,14 +77,17 @@ fn build_scene(config: &Config) -> scene::Scene {
         }),
     };
 
-    let cam = cameras::SimpleCamera {
-        lower_left: Vector3::new(-2.0, -1.0, -4.0),
-        horizontal: Vector3::new(4.0, 0.0, 0.0),
-        vertical: Vector3::new(0.0, 2.0, 0.0),
-        origin: Vector3::new(0.0, 0.0, 3.0),
+    let cam = cameras::PinholeCamera {
+        core: CameraCore::new(
+                  Vector3::new(0.0, 1.0, 2.0),
+                  Vector3::new(0.0, 0.0, -1.0),
+                  Vector3::new(0.0, 1.0, 0.0),
+                  ),
+        vp_distance: 400.0,
+        zoom_factor: 1.0,
     };
 
-    scene::Scene {
+    Scene {
         objects: vec![
             Box::new(s_left_front),
             Box::new(s_right_front),
@@ -97,6 +100,11 @@ fn build_scene(config: &Config) -> scene::Scene {
         background: Color::all(0.5),
         camera: Box::new(cam),
         config: config.clone(),
+        view_plane: ViewPlane {
+            hres: 800,
+            vres: 400,
+            pixel_size: 1.0,
+        },
     }
 }
 
@@ -113,8 +121,7 @@ fn main() {
         println!("Rendering...");
     }
 
-    let mut img = Image::new(800, 400, black());
-    s.render(&mut img);
+    let img = s.camera.render(&s);
 
     if !config.quiet {
         println!("Writing output file.");
