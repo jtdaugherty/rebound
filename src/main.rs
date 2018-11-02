@@ -2,7 +2,7 @@
 use std::fs::File;
 
 extern crate nalgebra;
-use nalgebra::{Vector3};
+use nalgebra::{Point3, Vector3};
 
 extern crate samplers;
 mod types;
@@ -16,6 +16,7 @@ mod args;
 
 use types::*;
 use shapes::sphere;
+use shapes::plane;
 use materials::metal;
 use materials::lambertian;
 use materials::emissive;
@@ -68,9 +69,9 @@ fn build_scene(config: &Config) -> scene::Scene {
         }),
     };
 
-    let s_ground = sphere::Sphere {
-        center: Vector3::new(0.0, -10000.5, -1.0),
-        radius: 10000.0,
+    let s_ground = plane::Plane {
+        origin: Point3::new(0.0, -0.5, 0.0),
+        normal: Vector3::new(0.0, 1.0, 0.0),
         material: Box::new(lambertian::Lambertian {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
