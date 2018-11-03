@@ -1,6 +1,6 @@
 
 extern crate nalgebra;
-use nalgebra::{Vector3, normalize};
+use nalgebra::{Vector3, Point2, normalize};
 
 extern crate rand;
 use rand::IsaacRng;
@@ -13,7 +13,7 @@ use num::traits::Pow;
 #[macro_use] extern crate itertools;
 
 #[derive(Debug)]
-pub struct Point2d {
+pub struct UnitSquareSample {
     pub x: f64,
     pub y: f64,
 }
@@ -30,28 +30,28 @@ pub fn new() -> SampleSource {
     }
 }
 
-pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
+pub fn u_grid_regular(root: usize) -> Vec<UnitSquareSample> {
     let increment = 1.0 / (root as f64);
     let start = 0.5 * increment;
     let range: Vec<f64> = (0..root).map(|i| start + increment * (i as f64)).collect();
 
     iproduct!(&range, &range).map(
-        |(x, y)| Point2d { x: x.clone(), y: y.clone(), }).collect()
+        |(x, y)| UnitSquareSample { x: x.clone(), y: y.clone(), }).collect()
 }
 
-pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<Point2d> {
+pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<UnitSquareSample> {
     let between = Uniform::from(0.0..1.0);
     let increment = 1.0 / (root as f64);
     let regular = u_grid_regular(root);
     regular.iter().map(
-        |p| Point2d {
+        |p| UnitSquareSample {
             x: p.x + (between.sample(&mut s.rng) - 0.5) * increment,
             y: p.y + (between.sample(&mut s.rng) - 0.5) * increment,
         }).collect()
 }
 
 // Assumes input samples are all in [0..1]
-pub fn to_hemisphere(points: Vec<Point2d>, e: f64) -> Vec<Vector3<f64>> {
+pub fn to_hemisphere(points: Vec<UnitSquareSample>, e: f64) -> Vec<Vector3<f64>> {
     points.iter().map(
         |p| {
             let cos_phi = (2.0 * std::f64::consts::PI * p.x).cos();
@@ -61,12 +61,12 @@ pub fn to_hemisphere(points: Vec<Point2d>, e: f64) -> Vec<Vector3<f64>> {
             let pu = sin_theta * cos_phi;
             let pv = sin_theta * sin_phi;
             let pw = cos_theta;
-            normalize(&Vector3::new(pu, pv, pw))
+            normalize(&Vector3::new(pu, pw, pv))
         }).collect()
 }
 
 // Assumes input samples are all in [0..1]
-pub fn to_poisson_disc(points: Vec<Point2d>) -> Vec<Point2d> {
+pub fn to_poisson_disc(points: Vec<UnitSquareSample>) -> Vec<Point2<f64>> {
     points.iter().map(
         |p| {
             let spx = 2.0 * p.x - 1.0;
@@ -98,10 +98,10 @@ pub fn to_poisson_disc(points: Vec<Point2d>) -> Vec<Point2d> {
 
             phi *= std::f64::consts::PI / 4.0;
 
-            Point2d {
-                x: r * phi.cos(),
-                y: r * phi.sin(),
-            }
+            Point2::new(
+                r * phi.cos(),
+                r * phi.sin(),
+            )
         }
         ).collect()
 }

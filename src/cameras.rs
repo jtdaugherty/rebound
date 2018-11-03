@@ -1,6 +1,6 @@
 
 extern crate nalgebra;
-use nalgebra::{Vector3};
+use nalgebra::{Vector3, Point2};
 
 extern crate rand;
 use self::rand::Rng;
@@ -28,7 +28,7 @@ impl Camera for PinholeCamera {
         let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres, black());
         let mut sampler = samplers::new();
 
-        let pixel_sample_sets: Vec<Vec<samplers::Point2d>> =
+        let pixel_sample_sets: Vec<Vec<samplers::UnitSquareSample>> =
             if scene.config.sample_root == 1 {
                 vec!(samplers::u_grid_regular(scene.config.sample_root))
             } else {
@@ -110,11 +110,11 @@ impl Camera for ThinLensCamera {
         let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres, black());
         let mut sampler = samplers::new();
 
-        let pixel_sample_sets: Vec<Vec<samplers::Point2d>> =
+        let pixel_sample_sets: Vec<Vec<samplers::UnitSquareSample>> =
             (0..img.width).map(|_|
                 samplers::u_grid_jittered(&mut sampler, scene.config.sample_root)).collect();
 
-        let disc_sample_sets: Vec<Vec<samplers::Point2d>> =
+        let disc_sample_sets: Vec<Vec<Point2<f64>>> =
             (0..img.width).map(|_|
                 samplers::to_poisson_disc(
                     samplers::u_grid_jittered(&mut sampler, scene.config.sample_root))).collect();
