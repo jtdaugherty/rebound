@@ -2,6 +2,9 @@
 Short-term
 ==========
 
+* Improve camera rendering method abstraction to avoid the
+pinhole/thin-lens code duplication
+
 * Add timing functionality to report on the duration of various
 operations. We want to know how much time it takes to:
   * Generate samples
