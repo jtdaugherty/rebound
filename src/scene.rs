@@ -4,7 +4,7 @@ use nalgebra::{Vector3};
 
 use types::*;
 
-impl Intersectable for Scene {
+impl Scene {
     fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>> {
         self.objects.iter()
             .filter_map(|o| o.hit(r))
