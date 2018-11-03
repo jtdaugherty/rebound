@@ -39,7 +39,7 @@ pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
 }
 
 pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<Point2d> {
-    let increment = 1.0 / ((root as f64) + 1.0);
+    let increment = 1.0 / (root as f64);
     let lo = -0.5 * increment;
     let hi = 0.5 * increment;
     let regular = u_grid_regular(root);
