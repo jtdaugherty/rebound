@@ -30,8 +30,9 @@ pub fn new() -> SampleSource {
 }
 
 pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
-    let increment = 1.0 / ((root as f64) + 1.0);
-    let range: Vec<f64> = (0..root).map(|i| increment * (i as f64 + 1.0)).collect();
+    let increment = 1.0 / (root as f64);
+    let start = 1.0 / ((root * root) as f64);
+    let range: Vec<f64> = (0..root).map(|i| start + increment * (i as f64)).collect();
 
     iproduct!(&range, &range).map(
         |(x, y)| Point2d { x: x.clone(), y: y.clone(), }).collect()
