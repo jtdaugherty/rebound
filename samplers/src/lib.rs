@@ -5,6 +5,7 @@ use nalgebra::{Vector3, normalize};
 extern crate rand;
 use rand::IsaacRng;
 use rand::Rng;
+use rand::distributions::{Distribution, Uniform};
 
 extern crate num;
 use num::traits::Pow;
@@ -39,12 +40,13 @@ pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
 }
 
 pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<Point2d> {
+    let between = Uniform::from(0.0..1.0);
     let increment = 1.0 / (root as f64);
     let regular = u_grid_regular(root);
     regular.iter().map(
         |p| Point2d {
-            x: p.x + (s.rng.gen_range(0.0, 1.0) - 0.5) * increment,
-            y: p.y + (s.rng.gen_range(0.0, 1.0) - 0.5) * increment,
+            x: p.x + (between.sample(&mut s.rng) - 0.5) * increment,
+            y: p.y + (between.sample(&mut s.rng) - 0.5) * increment,
         }).collect()
 }
 
