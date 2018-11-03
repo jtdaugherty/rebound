@@ -55,7 +55,8 @@ impl Camera for PinholeCamera {
         for row in 0..img.height {
             sampler.rng.shuffle(&mut sample_set_indexes);
 
-            for col in 0..img.width {
+
+            let row_pixels = (0..img.width).map(|col| {
                 let mut color = black();
                 let pixel_samples = &pixel_sample_sets[sample_set_indexes[col] % pixel_sample_sets.len()];
 
@@ -72,9 +73,10 @@ impl Camera for PinholeCamera {
 
                 color *= pixel_denom;
                 color.max_to_one();
+                color
+            }).collect();
 
-                img.set_pixel(col, row, color);
-            }
+            img.set_row(row, row_pixels);
 
             let progress = 100.0 * (((row + 1) * img.width) as f64) / total_pixels;
             print!("  {} %\r", progress as u32);
@@ -138,7 +140,7 @@ impl Camera for ThinLensCamera {
         for row in 0..img.height {
             sampler.rng.shuffle(&mut sample_set_indexes);
 
-            for col in 0..img.width {
+            let row_pixels = (0..img.width).map(|col| {
                 let mut color = black();
                 let pixel_samples = &pixel_sample_sets[sample_set_indexes[col] % pixel_sample_sets.len()];
                 let disc_samples = &disc_sample_sets[sample_set_indexes[col] % disc_sample_sets.len()];
@@ -159,9 +161,10 @@ impl Camera for ThinLensCamera {
 
                 color *= pixel_denom;
                 color.max_to_one();
+                color
+            }).collect();
 
-                img.set_pixel(col, row, color);
-            }
+            img.set_row(row, row_pixels);
 
             let progress = 100.0 * (((row + 1) * img.width) as f64) / total_pixels;
             print!("  {} %\r", progress as u32);

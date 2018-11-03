@@ -124,6 +124,10 @@ impl Image {
         self.pixels[h][w] = val;
     }
 
+    pub fn set_row(&mut self, row_index: usize, values: Vec<Color>) {
+        self.pixels[row_index] = values;
+    }
+
     pub fn write(&self, f: &mut File) {
         let mut buf = BufWriter::new(f);
 
