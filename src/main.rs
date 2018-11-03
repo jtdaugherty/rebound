@@ -22,47 +22,17 @@ use materials::lambertian;
 use materials::emissive;
 
 fn build_scene(config: &Config) -> Scene {
-    let s_right_front = sphere::Sphere {
-        center: Vector3::new(1.2, 0.0, -0.6),
-        radius: 0.5,
-        material: Box::new(metal::Metal {
-            albedo: Color::new(0.3, 0.3, 0.7),
-            gloss: 0.3,
-        }),
-    };
-    let s_left_front = sphere::Sphere {
-        center: Vector3::new(-1.2, 0.0, -0.6),
-        radius: 0.5,
-        material: Box::new(metal::Metal {
-            albedo: Color::new(0.9, 0.5, 0.5),
-            gloss: 0.01,
-        }),
-    };
-    let s_right_back = sphere::Sphere {
-        center: Vector3::new(0.6, 0.0, -2.0),
-        radius: 0.5,
-        material: Box::new(metal::Metal {
-            albedo: Color::new(0.4, 0.6, 0.1),
-            gloss: 2.0,
-        }),
-    };
-    let s_left_back = sphere::Sphere {
-        center: Vector3::new(-0.6, 0.0, -2.0),
-        radius: 0.5,
-        material: Box::new(metal::Metal {
-            albedo: Color::new(0.97, 0.56, 0.26),
-            gloss: 0.01,
-        }),
-    };
-    let s_light1 = sphere::Sphere {
+    let mut ss = (-10..10).map(|z|
+        Box::new(sphere::Sphere {
+            center: Vector3::new(0.0, 0.5, z as f64),
+            radius: 0.5,
+            material: Box::new(lambertian::Lambertian {
+                albedo: Color::new(0.7, 0.8, 1.0),
+            }),
+        }) as Box<Intersectable>).collect();
+
+    let s_light = sphere::Sphere {
         center: Vector3::new(10.0, 12.0, -2.0),
-        radius: 5.0,
-        material: Box::new(emissive::Emissive {
-            color: Color::all(1.0),
-        }),
-    };
-    let s_light2 = sphere::Sphere {
-        center: Vector3::new(-10.0, 12.0, -2.0),
         radius: 5.0,
         material: Box::new(emissive::Emissive {
             color: Color::all(1.0),
@@ -70,33 +40,34 @@ fn build_scene(config: &Config) -> Scene {
     };
 
     let s_ground = plane::Plane {
-        origin: Point3::new(0.0, -0.5, 0.0),
+        origin: Point3::new(0.0, 0.0, 0.0),
         normal: Vector3::new(0.0, 1.0, 0.0),
         material: Box::new(lambertian::Lambertian {
             albedo: Color::new(0.5, 0.5, 0.5),
         }),
     };
 
-    let cam = cameras::PinholeCamera {
+    let cam = cameras::ThinLensCamera {
         core: CameraCore::new(
-                  Vector3::new(0.0, 1.0, 2.0),
+                  Vector3::new(2.0, 0.5, 10.0),
                   Vector3::new(0.0, 0.0, -1.0),
                   Vector3::new(0.0, 1.0, 0.0),
                   ),
         vp_distance: 400.0,
         zoom_factor: 1.0,
+        focal_plane_distance: 4.0,
+        lens_radius: 0.1,
     };
 
+    let mut all_objects: Vec<Box<Intersectable>> = vec![
+        Box::new(s_ground),
+        Box::new(s_light),
+    ];
+
+    all_objects.append(&mut ss);
+
     Scene {
-        objects: vec![
-            Box::new(s_left_front),
-            Box::new(s_right_front),
-            Box::new(s_left_back),
-            Box::new(s_right_back),
-            Box::new(s_ground),
-            Box::new(s_light1),
-            Box::new(s_light2),
-        ],
+        objects: all_objects,
         background: Color::all(0.5),
         camera: Box::new(cam),
         config: config.clone(),
