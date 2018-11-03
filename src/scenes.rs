@@ -11,7 +11,7 @@ use materials::emissive;
 
 pub fn lookup_scene(name: &String) -> Option<&Fn(&Config) -> Scene> {
     let scenes: Vec<(String, &Fn(&Config) -> Scene)> = vec![
-        (String::from("one"), &build_scene1),
+        (String::from("thinlens1"), &build_scene1),
     ];
 
     scenes.iter()
