@@ -50,3 +50,25 @@ impl Intersectable for Sphere {
         }
     }
 }
+
+pub struct SampleSphere {
+    pub sphere: Sphere,
+    pub samples: Vec<Vector3<f64>>,
+}
+
+impl Intersectable for SampleSphere {
+    fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>> {
+        match self.sphere.hit(r) {
+            None => None,
+            Some(h) => {
+                // Did the hit occur in the vicinity of a sample vector point?
+                for &sample in self.samples.iter() {
+                    if sample.dot(&h.normal) > 0.999 {
+                        return Some(h);
+                    }
+                }
+                None
+            }
+        }
+    }
+}
