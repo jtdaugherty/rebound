@@ -87,11 +87,6 @@ fn main() {
     }
 
     let s = build_scene(&config);
-
-    if !config.quiet {
-        println!("Rendering...");
-    }
-
     let img = s.camera.render(&s);
 
     if !config.quiet {
