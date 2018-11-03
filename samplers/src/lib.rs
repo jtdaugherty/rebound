@@ -31,7 +31,7 @@ pub fn new() -> SampleSource {
 
 pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
     let increment = 1.0 / (root as f64);
-    let start = 1.0 / ((root * root) as f64);
+    let start = 0.5 * increment;
     let range: Vec<f64> = (0..root).map(|i| start + increment * (i as f64)).collect();
 
     iproduct!(&range, &range).map(
@@ -40,13 +40,11 @@ pub fn u_grid_regular(root: usize) -> Vec<Point2d> {
 
 pub fn u_grid_jittered(s: &mut SampleSource, root: usize) -> Vec<Point2d> {
     let increment = 1.0 / (root as f64);
-    let lo = -0.5 * increment;
-    let hi = 0.5 * increment;
     let regular = u_grid_regular(root);
     regular.iter().map(
         |p| Point2d {
-            x: p.x + s.rng.gen_range(lo, hi),
-            y: p.y + s.rng.gen_range(lo, hi),
+            x: p.x + (s.rng.gen_range(0.0, 1.0) - 0.5) * increment,
+            y: p.y + (s.rng.gen_range(0.0, 1.0) - 0.5) * increment,
         }).collect()
 }
 
