@@ -25,6 +25,12 @@ pub fn config_from_args() -> Config {
              .value_name("DEPTH")
              .help("Maximum recursion depth")
              .takes_value(true))
+        .arg(Arg::with_name("scene-name")
+             .short("n")
+             .long("scene-name")
+             .value_name("NAME")
+             .help("Scene name")
+             .takes_value(true))
         .arg(Arg::with_name("output-file")
              .short("o")
              .long("output-file")
@@ -47,6 +53,10 @@ pub fn config_from_args() -> Config {
             0 => String::from(DEFAULT_OUTPUT_FILENAME),
             1 => String::from(ms.value_of("output-file").unwrap()),
             _ => panic!("BUG: output file specified more than once"),
+        },
+        scene_name: match ms.occurrences_of("scene-name") {
+            1 => String::from(ms.value_of("scene-name").unwrap()),
+            _ => panic!("Scene name must be provided"),
         },
     };
 }

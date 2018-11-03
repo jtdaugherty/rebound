@@ -28,6 +28,7 @@ pub struct Config {
     pub quiet: bool,
     pub max_depth: usize,
     pub output_file: String,
+    pub scene_name: String,
 }
 
 #[derive(Clone)]
@@ -240,6 +241,7 @@ impl<'a> Hit<'a> {
 impl Config {
     pub fn show(&self) {
         println!("Renderer configuration:");
+        println!("  Scene:          {}", self.scene_name);
         println!("  Sample root:    {} ({} pixel sample{})",
            self.sample_root, self.sample_root * self.sample_root,
            if self.sample_root == 1 { "" } else { "s" });
