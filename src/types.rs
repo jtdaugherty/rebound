@@ -62,12 +62,12 @@ pub struct ScatterResult {
     pub attenuate: Color,
 }
 
-pub trait Material {
+pub trait Material: Sync + Send {
     fn scatter(&self, r: &Ray, hit: &Hit, sv: &Vector3<f64>) -> Option<ScatterResult>;
     fn emitted(&self) -> Color;
 }
 
-pub trait Intersectable {
+pub trait Intersectable: Sync + Send {
     fn hit<'a>(&'a self, r: &Ray) -> Option<Hit<'a>>;
 }
 
@@ -107,7 +107,7 @@ impl CameraCore {
     }
 }
 
-pub trait Camera {
+pub trait Camera: Sync + Send {
     fn render(&self, scene: &Scene) -> Image;
 }
 
