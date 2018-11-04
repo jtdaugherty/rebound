@@ -8,6 +8,7 @@ use shapes::sphere;
 use shapes::plane;
 use materials::lambertian;
 use materials::emissive;
+use materials::metal;
 
 pub fn lookup_scene(name: &String) -> Option<&Fn(&Config) -> Scene> {
     let scenes: Vec<(String, &Fn(&Config) -> Scene)> = vec![
@@ -82,37 +83,41 @@ fn build_scene2(config: &Config) -> Scene {
     let s_front_left = sphere::Sphere {
         center: Vector3::new(-2.0, 0.5, 0.0),
         radius: 0.5,
-        material: Box::new(lambertian::Lambertian {
+        material: Box::new(metal::Metal {
             albedo: Color::all(1.0),
+            gloss: 0.0,
         }),
     };
 
     let s_front_right = sphere::Sphere {
         center: Vector3::new(2.0, 0.5, 0.0),
         radius: 0.5,
-        material: Box::new(lambertian::Lambertian {
+        material: Box::new(metal::Metal {
             albedo: Color::all(1.0),
+            gloss: 0.9,
         }),
     };
 
     let s_back_left = sphere::Sphere {
-        center: Vector3::new(-1.0, 0.5, -2.0),
-        radius: 0.5,
-        material: Box::new(lambertian::Lambertian {
+        center: Vector3::new(-1.0, 0.75, -2.0),
+        radius: 0.75,
+        material: Box::new(metal::Metal {
             albedo: Color::all(1.0),
+            gloss: 0.3,
         }),
     };
 
     let s_back_right = sphere::Sphere {
-        center: Vector3::new(1.0, 0.5, -2.0),
-        radius: 0.5,
-        material: Box::new(lambertian::Lambertian {
+        center: Vector3::new(1.0, 0.75, -2.0),
+        radius: 0.75,
+        material: Box::new(metal::Metal {
             albedo: Color::all(1.0),
+            gloss: 0.6,
         }),
     };
 
     let s_light1 = sphere::Sphere {
-        center: Vector3::new(-5.0, 7.0, 0.0),
+        center: Vector3::new(-5.0, 8.0, 0.0),
         radius: 5.0,
         material: Box::new(emissive::Emissive {
             color: Color::new(1.0, 0.3, 0.3),
@@ -120,7 +125,7 @@ fn build_scene2(config: &Config) -> Scene {
     };
 
     let s_light2 = sphere::Sphere {
-        center: Vector3::new(5.0, 7.0, 0.0),
+        center: Vector3::new(5.0, 8.0, 0.0),
         radius: 5.0,
         material: Box::new(emissive::Emissive {
             color: Color::new(0.3, 0.3, 1.0),
@@ -138,7 +143,7 @@ fn build_scene2(config: &Config) -> Scene {
     let cam = cameras::ThinLensCamera {
         core: CameraCore::new(
                   Vector3::new(0.0, 1.1, 15.0),
-                  Vector3::new(0.0, 0.0, -1.0),
+                  Vector3::new(0.0, 0.5, -1.0),
                   Vector3::new(0.0, 1.0, 0.0),
                   ),
         vp_distance: 1500.0,
@@ -163,9 +168,9 @@ fn build_scene2(config: &Config) -> Scene {
         camera: Box::new(cam),
         config: config.clone(),
         view_plane: ViewPlane {
-            hres: 800,
-            vres: 400,
-            pixel_size: 1.0,
+            hres: 2880,
+            vres: 1800,
+            pixel_size: 0.25,
         },
     }
 }
