@@ -11,6 +11,9 @@ use types::*;
 use std::io::stdout;
 use std::io::Write;
 
+extern crate rayon;
+use rayon::prelude::*;
+
 pub struct PinholeCamera {
     pub core: CameraCore,
     pub vp_distance: f64,
@@ -130,14 +133,15 @@ impl Camera for ThinLensCamera {
                     ).collect()
                 ).collect();
 
-        let total_pixels = (img.height * img.width) as f64;
         let half_img_h = img.height as f64 * 0.5;
         let half_img_w = img.width as f64 * 0.5;
-        let mut sample_set_indexes: Vec<usize> = (0..img.width).collect();
         let pixel_denom = 1.0 / ((scene.config.sample_root * scene.config.sample_root) as f64);
         let adjusted_pixel_size = scene.view_plane.pixel_size / self.zoom_factor;
 
-        for row in 0..img.height {
+        let rows: Vec<usize> = (0..img.height).collect();
+        let row_pixel_vecs: Vec<Vec<Color>> = rows.par_iter().map(|row| {
+            let mut sample_set_indexes: Vec<usize> = (0..img.width).collect();
+            let mut sampler = samplers::new();
             sampler.rng.shuffle(&mut sample_set_indexes);
 
             let row_pixels = (0..img.width).map(|col| {
@@ -147,7 +151,7 @@ impl Camera for ThinLensCamera {
 
                 for (index, point) in pixel_samples.iter().enumerate() {
                     let u = adjusted_pixel_size * (col as f64 - half_img_w + point.x);
-                    let v = adjusted_pixel_size * ((img.height - row) as f64 - half_img_h + point.y);
+                    let v = adjusted_pixel_size * ((img.height - *row) as f64 - half_img_h + point.y);
                     let lens_sample = &disc_samples[index];
                     let lpx = lens_sample.x * self.lens_radius;
                     let lpy = lens_sample.y * self.lens_radius;
@@ -164,14 +168,12 @@ impl Camera for ThinLensCamera {
                 color
             }).collect();
 
-            img.set_row(row, row_pixels);
+            row_pixels
+        }).collect();
 
-            let progress = 100.0 * (((row + 1) * img.width) as f64) / total_pixels;
-            print!("  {} %\r", progress as u32);
-            stdout().flush().unwrap();
+        for (row, v) in row_pixel_vecs.iter().enumerate() {
+            img.set_row(row, v.clone());
         }
-
-        println!("");
 
         img
     }

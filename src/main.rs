@@ -2,8 +2,9 @@
 use std::fs::File;
 
 extern crate nalgebra;
-
+extern crate rayon;
 extern crate samplers;
+
 mod types;
 mod materials;
 mod cameras;
