@@ -47,11 +47,11 @@ pub fn config_from_args() -> Config {
 
     let ms = app.get_matches();
 
-    return Config {
+    Config {
         quiet: ms.occurrences_of("quiet") > 0,
         sample_root: ms.value_of("sample-root").unwrap().parse().unwrap(),
         max_depth: ms.value_of("depth").unwrap().parse().unwrap(),
         output_file: String::from(ms.value_of("output-file").unwrap()),
         scene_name: String::from(ms.value_of("scene-name").unwrap()),
-    };
+    }
 }
