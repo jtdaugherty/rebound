@@ -9,7 +9,7 @@ pub fn config_from_args() -> Config {
     let default_sample_root = DEFAULT_SAMPLE_ROOT.to_string();
     let default_max_depth = DEFAULT_MAX_DEPTH.to_string();
 
-    let ms = App::new("rebound")
+    let app = App::new("rebound")
         .version("0.1")
         .author("Jonathan Daugherty")
         .arg(Arg::with_name("quiet")
@@ -35,6 +35,7 @@ pub fn config_from_args() -> Config {
              .long("scene-name")
              .value_name("NAME")
              .help("Scene name")
+             .required(true)
              .takes_value(true))
         .arg(Arg::with_name("output-file")
              .short("o")
@@ -42,17 +43,15 @@ pub fn config_from_args() -> Config {
              .value_name("FILENAME")
              .help("Output filename path")
              .default_value(DEFAULT_OUTPUT_FILENAME)
-             .takes_value(true))
-        .get_matches();
+             .takes_value(true));
+
+    let ms = app.get_matches();
 
     return Config {
         quiet: ms.occurrences_of("quiet") > 0,
         sample_root: ms.value_of("sample-root").unwrap().parse().unwrap(),
         max_depth: ms.value_of("depth").unwrap().parse().unwrap(),
         output_file: String::from(ms.value_of("output-file").unwrap()),
-        scene_name: match ms.value_of("scene-name") {
-            Some(v) => String::from(v),
-            None => panic!("Scene name must be provided"),
-        },
+        scene_name: String::from(ms.value_of("scene-name").unwrap()),
     };
 }
