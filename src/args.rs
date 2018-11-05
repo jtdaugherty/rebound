@@ -6,6 +6,9 @@ use types::Config;
 use constants::*;
 
 pub fn config_from_args() -> Config {
+    let default_sample_root = DEFAULT_SAMPLE_ROOT.to_string();
+    let default_max_depth = DEFAULT_MAX_DEPTH.to_string();
+
     let ms = App::new("rebound")
         .version("0.1")
         .author("Jonathan Daugherty")
@@ -18,12 +21,14 @@ pub fn config_from_args() -> Config {
              .long("sample-root")
              .value_name("ROOT")
              .help("Sample root")
+             .default_value(default_sample_root.as_str())
              .takes_value(true))
         .arg(Arg::with_name("depth")
              .short("d")
              .long("depth")
              .value_name("DEPTH")
              .help("Maximum recursion depth")
+             .default_value(default_max_depth.as_str())
              .takes_value(true))
         .arg(Arg::with_name("scene-name")
              .short("n")
@@ -36,6 +41,7 @@ pub fn config_from_args() -> Config {
              .long("output-file")
              .value_name("FILENAME")
              .help("Output filename path")
+             .default_value(DEFAULT_OUTPUT_FILENAME)
              .takes_value(true))
         .get_matches();
 
@@ -49,13 +55,12 @@ pub fn config_from_args() -> Config {
             Some(v) => { v.parse().unwrap() },
             None => DEFAULT_MAX_DEPTH,
         },
-        output_file: match ms.occurrences_of("output-file") {
-            0 => String::from(DEFAULT_OUTPUT_FILENAME),
-            1 => String::from(ms.value_of("output-file").unwrap()),
-            _ => panic!("BUG: output file specified more than once"),
+        output_file: match ms.value_of("output-file") {
+            Some(v) => String::from(v),
+            _ => panic!("Output file must be specified"),
         },
-        scene_name: match ms.occurrences_of("scene-name") {
-            1 => String::from(ms.value_of("scene-name").unwrap()),
+        scene_name: match ms.value_of("scene-name") {
+            Some(v) => String::from(v),
             _ => panic!("Scene name must be provided"),
         },
     };
