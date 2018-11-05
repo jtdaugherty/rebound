@@ -57,11 +57,11 @@ pub fn config_from_args() -> Config {
         },
         output_file: match ms.value_of("output-file") {
             Some(v) => String::from(v),
-            _ => panic!("Output file must be specified"),
+            None => panic!("Output file must be specified"),
         },
         scene_name: match ms.value_of("scene-name") {
             Some(v) => String::from(v),
-            _ => panic!("Scene name must be provided"),
+            None => panic!("Scene name must be provided"),
         },
     };
 }
