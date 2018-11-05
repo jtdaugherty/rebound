@@ -47,18 +47,9 @@ pub fn config_from_args() -> Config {
 
     return Config {
         quiet: ms.occurrences_of("quiet") > 0,
-        sample_root: match ms.value_of("sample-root") {
-            Some(v) => { v.parse().unwrap() },
-            None => DEFAULT_SAMPLE_ROOT,
-        },
-        max_depth: match ms.value_of("depth") {
-            Some(v) => { v.parse().unwrap() },
-            None => DEFAULT_MAX_DEPTH,
-        },
-        output_file: match ms.value_of("output-file") {
-            Some(v) => String::from(v),
-            None => panic!("Output file must be specified"),
-        },
+        sample_root: ms.value_of("sample-root").unwrap().parse().unwrap(),
+        max_depth: ms.value_of("depth").unwrap().parse().unwrap(),
+        output_file: String::from(ms.value_of("output-file").unwrap()),
         scene_name: match ms.value_of("scene-name") {
             Some(v) => String::from(v),
             None => panic!("Scene name must be provided"),
