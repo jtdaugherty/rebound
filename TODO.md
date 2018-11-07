@@ -14,10 +14,8 @@ operations. We want to know how much time it takes to:
 * Light power settings (look at how the ground up book does this and see
 how we can adapt it)
 
-* Need output machinery
-  * Image accumulator thread
-  * Worker threads work on regions of the image and send chunks to
-    accumulator
+* Live preview window
+  * Keybindings to change some params and re-render
 
 * Test lambertian and metal scattering with hemisphere sampling rather
 than spherical sampling with rejection, compare results at high sample
@@ -33,10 +31,7 @@ like sampling helper tools and eventually a network rendering helper
 
 * Scene disk file format?
 
-* Write some rustdocs
-
 Long-term
 =========
 
-* SDL2 or similar live graphics output backend
 * https://crates.io/crates/tobj
