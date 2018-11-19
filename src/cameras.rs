@@ -114,24 +114,8 @@ impl Camera for ThinLensCamera {
     fn render(&self, scene: &Scene) -> Image {
         let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres, black());
         let mut sampler = samplers::new();
-
-        let pixel_sample_sets: Vec<Vec<samplers::UnitSquareSample>> =
-            (0..img.width).map(|_|
-                samplers::u_grid_jittered(&mut sampler, scene.config.sample_root)).collect();
-
-        let disc_sample_sets: Vec<Vec<samplers::UnitDiscSample>> =
-            (0..img.width).map(|_|
-                samplers::to_poisson_disc(
-                    samplers::u_grid_jittered(&mut sampler, scene.config.sample_root))).collect();
-
-        let hemi_sample_sets: Vec<Vec<Vec<Vector3<f64>>>> =
-            (0..img.width).map(|_|
-                (0..scene.config.max_depth).map(|_|
-                    samplers::to_hemisphere(
-                        samplers::u_grid_jittered(&mut sampler, scene.config.sample_root),
-                        0.0)
-                    ).collect()
-                ).collect();
+        let samples = MasterSampleSets::new(&mut sampler, scene.config.sample_root, scene.config.max_depth,
+                                            img.width);
 
         let half_img_h = img.height as f64 * 0.5;
         let half_img_w = img.width as f64 * 0.5;
@@ -140,14 +124,12 @@ impl Camera for ThinLensCamera {
 
         let rows: Vec<usize> = (0..img.height).collect();
         let row_pixel_vecs: Vec<Vec<Color>> = rows.par_iter().map(|row| {
-            let mut sample_set_indexes: Vec<usize> = (0..img.width).collect();
-            let mut sampler = samplers::new();
-            sampler.rng.shuffle(&mut sample_set_indexes);
+            let sample_set_indexes = samples.shuffle_indices();
 
             let row_pixels = (0..img.width).map(|col| {
                 let mut color = black();
-                let pixel_samples = &pixel_sample_sets[sample_set_indexes[col] % pixel_sample_sets.len()];
-                let disc_samples = &disc_sample_sets[sample_set_indexes[col] % disc_sample_sets.len()];
+                let pixel_samples = &samples.pixel_sets[sample_set_indexes[col] % samples.pixel_sets.len()];
+                let disc_samples = &samples.disc_sets[sample_set_indexes[col] % samples.disc_sets.len()];
 
                 for (index, point) in pixel_samples.iter().enumerate() {
                     let u = adjusted_pixel_size * (col as f64 - half_img_w + point.x);
@@ -160,7 +142,7 @@ impl Camera for ThinLensCamera {
                         origin: self.core.eye + lpx * self.core.u + lpy * self.core.v,
                     };
 
-                    color += scene.color(&r, index, &hemi_sample_sets[sample_set_indexes[col]], 0);
+                    color += scene.color(&r, index, &samples.hemi_sets[sample_set_indexes[col]], 0);
                 }
 
                 color *= pixel_denom;

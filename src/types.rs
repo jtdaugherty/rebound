@@ -1,7 +1,9 @@
 
 extern crate nalgebra;
-
 use nalgebra::{Vector3};
+
+extern crate rand;
+use self::rand::Rng;
 
 use std::fs::File;
 use std::io::BufWriter;
@@ -12,6 +14,46 @@ use std::ops::MulAssign;
 use std::ops::Mul;
 use std::ops::Add;
 use std::cmp::Ordering;
+
+pub struct MasterSampleSets {
+    sample_root: usize,
+    image_width: usize,
+    pub pixel_sets: Vec<Vec<samplers::UnitSquareSample>>,
+    pub disc_sets: Vec<Vec<samplers::UnitDiscSample>>,
+    pub hemi_sets: Vec<Vec<Vec<Vector3<f64>>>>,
+}
+
+impl MasterSampleSets {
+    pub fn new(sampler: &mut samplers::SampleSource, sample_root: usize,
+               max_depth: usize, width: usize) -> MasterSampleSets {
+        MasterSampleSets {
+            pixel_sets: (0..width).map(|_|
+                samplers::u_grid_jittered(sampler, sample_root)).collect(),
+
+            disc_sets: (0..width).map(|_|
+                samplers::to_poisson_disc(
+                    samplers::u_grid_jittered(sampler, sample_root))).collect(),
+
+            hemi_sets: (0..width).map(|_|
+                (0..max_depth).map(|_|
+                    samplers::to_hemisphere(
+                        samplers::u_grid_jittered(sampler, sample_root),
+                        0.0)
+                    ).collect()
+                ).collect(),
+
+            image_width: width,
+            sample_root,
+        }
+    }
+
+    pub fn shuffle_indices(&self) -> Vec<usize> {
+        let mut sample_set_indexes: Vec<usize> = (0..self.image_width).collect();
+        let mut sampler = samplers::new();
+        sampler.rng.shuffle(&mut sample_set_indexes);
+        sample_set_indexes
+    }
+}
 
 #[derive(Clone)]
 pub struct Hit<'a> {
