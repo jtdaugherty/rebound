@@ -1,9 +1,33 @@
 
 use std::sync::{Mutex, Arc};
+// Multiple-producer, single-consumer
+use std::sync::mpsc;
 use std::thread;
 use std::iter::Iterator;
 
 fn main() {
+    let (tx, rx) = mpsc::channel();
+    let tx2 = tx.clone();
+
+    thread::spawn(move || {
+        tx.send(String::from("Hello,")).unwrap();
+        tx.send(String::from("World!")).unwrap();
+    });
+
+    thread::spawn(move || {
+        tx2.send(String::from("Hello again,")).unwrap();
+        tx2.send(String::from("Big World!")).unwrap();
+    });
+
+    let h = thread::spawn(move || {
+        println!("{}", rx.recv().unwrap());
+        println!("{}", rx.recv().unwrap());
+        println!("{}", rx.recv().unwrap());
+        println!("{}", rx.recv().unwrap());
+    });
+
+    h.join().unwrap();
+
     let v: Vec<usize> = (0..10).collect();
     let counter = Arc::new(Mutex::new(v));
     let mut handles = vec![];
