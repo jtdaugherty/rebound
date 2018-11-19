@@ -20,7 +20,7 @@ fn main() {
 
     let mut canvas = window.into_canvas().present_vsync().build().unwrap();
     let texture_creator = canvas.texture_creator();
-    let texture = texture_creator.load_texture("../rebound/demo.png").unwrap();
+    let texture = texture_creator.load_texture("../../demo.png").unwrap();
 
     let mut event_pump = sdl_context.event_pump().unwrap();
     let mut i = 0;
