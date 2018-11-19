@@ -16,7 +16,6 @@ use std::ops::Add;
 use std::cmp::Ordering;
 
 pub struct MasterSampleSets {
-    sample_root: usize,
     image_width: usize,
     pub pixel_sets: Vec<Vec<samplers::UnitSquareSample>>,
     pub disc_sets: Vec<Vec<samplers::UnitDiscSample>>,
@@ -43,7 +42,6 @@ impl MasterSampleSets {
                 ).collect(),
 
             image_width: width,
-            sample_root,
         }
     }
 
@@ -160,10 +158,6 @@ impl Image {
             width: w,
             height: h,
         }
-    }
-
-    pub fn set_pixel(&mut self, w: usize, h: usize, val: Color) {
-        self.pixels[h][w] = val;
     }
 
     pub fn set_row(&mut self, row_index: usize, values: Vec<Color>) {

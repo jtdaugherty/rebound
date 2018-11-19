@@ -152,7 +152,7 @@ fn build_scene2(config: &Config) -> Scene {
         lens_radius: 0.0,
     };
 
-    let mut all_objects: Vec<Box<Intersectable>> = vec![
+    let all_objects: Vec<Box<Intersectable>> = vec![
         Box::new(s_ground),
         Box::new(s_light1),
         Box::new(s_light2),
