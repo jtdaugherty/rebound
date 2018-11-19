@@ -1,6 +1,6 @@
 
 extern crate nalgebra;
-use nalgebra::{Vector3, Point2, normalize};
+use nalgebra::{Vector3, normalize};
 
 extern crate rand;
 use rand::IsaacRng;
@@ -11,6 +11,12 @@ extern crate num;
 use num::traits::Pow;
 
 #[macro_use] extern crate itertools;
+
+#[derive(Debug)]
+pub struct UnitDiscSample {
+    pub x: f64,
+    pub y: f64,
+}
 
 #[derive(Debug)]
 pub struct UnitSquareSample {
@@ -67,7 +73,7 @@ pub fn to_hemisphere(points: Vec<UnitSquareSample>, e: f64) -> Vec<Vector3<f64>>
 }
 
 // Assumes input samples are all in [0..1]
-pub fn to_poisson_disc(points: Vec<UnitSquareSample>) -> Vec<Point2<f64>> {
+pub fn to_poisson_disc(points: Vec<UnitSquareSample>) -> Vec<UnitDiscSample> {
     points.iter().map(
         |p| {
             let spx = 2.0 * p.x - 1.0;
@@ -99,10 +105,10 @@ pub fn to_poisson_disc(points: Vec<UnitSquareSample>) -> Vec<Point2<f64>> {
 
             phi *= std::f64::consts::PI / 4.0;
 
-            Point2::new(
-                r * phi.cos(),
-                r * phi.sin(),
-            )
+            UnitDiscSample {
+                x: r * phi.cos(),
+                y: r * phi.sin(),
+            }
         }
         ).collect()
 }

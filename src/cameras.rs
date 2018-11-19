@@ -1,6 +1,6 @@
 
 extern crate nalgebra;
-use nalgebra::{Vector3, Point2};
+use nalgebra::{Vector3};
 
 extern crate rand;
 use self::rand::Rng;
@@ -119,7 +119,7 @@ impl Camera for ThinLensCamera {
             (0..img.width).map(|_|
                 samplers::u_grid_jittered(&mut sampler, scene.config.sample_root)).collect();
 
-        let disc_sample_sets: Vec<Vec<Point2<f64>>> =
+        let disc_sample_sets: Vec<Vec<samplers::UnitDiscSample>> =
             (0..img.width).map(|_|
                 samplers::to_poisson_disc(
                     samplers::u_grid_jittered(&mut sampler, scene.config.sample_root))).collect();
