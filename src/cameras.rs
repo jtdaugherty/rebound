@@ -58,7 +58,6 @@ impl Camera for PinholeCamera {
         for row in 0..img.height {
             sampler.rng.shuffle(&mut sample_set_indexes);
 
-
             let row_pixels = (0..img.width).map(|col| {
                 let mut color = black();
                 let pixel_samples = &pixel_sample_sets[sample_set_indexes[col] % pixel_sample_sets.len()];
