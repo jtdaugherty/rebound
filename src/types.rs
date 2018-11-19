@@ -152,9 +152,9 @@ pub trait Camera: Sync + Send {
 }
 
 impl Image {
-    pub fn new(w: usize, h: usize, initial_color: Color) -> Image {
+    pub fn new(w: usize, h: usize) -> Image {
         Image {
-            pixels: (0..h).map(|_| (0..w).map(|_| initial_color.clone()).collect()).collect(),
+            pixels: (0..h).map(|_| vec![]).collect(),
             width: w,
             height: h,
         }
@@ -174,6 +174,12 @@ impl Image {
                        (pixel.r * 65535.99) as u16,
                        (pixel.g * 65535.99) as u16,
                        (pixel.b * 65535.99) as u16);
+            }
+
+            // Since this row could have been incomplete/missing, emit
+            // enough blank pixels to compensate.
+            for _ in 0..(self.width - row.len()) {
+                write!(buf, "{} {} {}\n", 0, 0, 0);
             }
         }
     }

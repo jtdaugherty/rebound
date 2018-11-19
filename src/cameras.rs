@@ -28,7 +28,7 @@ impl PinholeCamera {
 
 impl Camera for PinholeCamera {
     fn render(&self, scene: &Scene) -> Image {
-        let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres, black());
+        let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres);
         let mut sampler = samplers::new();
 
         let pixel_sample_sets: Vec<Vec<samplers::UnitSquareSample>> =
@@ -111,7 +111,7 @@ impl ThinLensCamera {
 
 impl Camera for ThinLensCamera {
     fn render(&self, scene: &Scene) -> Image {
-        let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres, black());
+        let mut img = Image::new(scene.view_plane.hres, scene.view_plane.vres);
         let mut sampler = samplers::new();
         let samples = MasterSampleSets::new(&mut sampler, scene.config.sample_root, scene.config.max_depth,
                                             img.width);
