@@ -16,12 +16,17 @@ how we can adapt it)
 
 * Live preview window
   * Keybindings to change some params and re-render
-
-* Test lambertian and metal scattering with hemisphere sampling rather
-than spherical sampling with rejection, compare results at high sample
-counts
-
-* BVH/bounding boxes etc
+  * To make this work, we want the render to become an internal service
+    * Want to send the renderer commands
+      * Set this scene and set up
+      * Render
+      * Cancel rendering
+    * Want the renderer to send us events
+      * Setting up (i.e. generating samples)
+      * Rendering started
+      * Chunk finished
+      * Rendering done
+    * Want to get a reference to the renderer's image buffer
 
 * Emissive material, environment lighting
 
