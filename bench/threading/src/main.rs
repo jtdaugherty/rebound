@@ -1,16 +1,18 @@
 
 use std::sync::{Mutex, Arc};
 use std::thread;
+use std::iter::Iterator;
 
 fn main() {
-    let counter = Arc::new(Mutex::new(0));
+    let v: Vec<usize> = (0..10).collect();
+    let counter = Arc::new(Mutex::new(v));
     let mut handles = vec![];
 
-    for _ in 0..10 {
+    for i in 0..10 {
         let counter = Arc::clone(&counter);
         let handle = thread::spawn(move || {
-            let mut num = counter.lock().unwrap();
-            *num += 1;
+            let mut v = counter.lock().unwrap();
+            v[i] = 0xbeef;
         });
 
         handles.push(handle);
@@ -20,5 +22,5 @@ fn main() {
         h.join().unwrap();
     }
 
-    println!("Final result: {}", *counter.lock().unwrap());
+    println!("Final result: {:?}", *counter.lock().unwrap());
 }
