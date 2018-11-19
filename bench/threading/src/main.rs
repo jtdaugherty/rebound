@@ -20,10 +20,9 @@ fn main() {
     });
 
     let h = thread::spawn(move || {
-        println!("{}", rx.recv().unwrap());
-        println!("{}", rx.recv().unwrap());
-        println!("{}", rx.recv().unwrap());
-        println!("{}", rx.recv().unwrap());
+        while let Ok(v) = rx.recv() {
+            println!("{}", v);
+        }
     });
 
     h.join().unwrap();
